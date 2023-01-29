@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getSession } from 'next-auth/react';
 
 const apiCall = axios.create({
     baseURL: process.env.BACKEND_API ?? 'http://localhost',
@@ -7,10 +8,22 @@ const apiCall = axios.create({
     },
 });
 
-apiCall.interceptors.request.use((config) => {
-    config.headers.Authorization = `Bearer ${session.accessToken}`;
-    return config;
-});
+apiCall.interceptors.request.use(
+    async (config) => {
+        const user = await getSession();
+        // console.log(user, 'user');
+        if (user?.accessToken) {
+            config.headers = {
+                Authorization: `Bearer ${user.accessToken}`,
+            };
+        }
+
+        return config;
+    },
+    (error) => {
+        Promise.reject(error);
+    }
+);
 
 apiCall.interceptors.response.use(
     function (response) {
