@@ -10,11 +10,15 @@ import { Password } from 'primereact/password';
 import { LayoutContext } from '../layout/context/layoutcontext';
 import { InputText } from 'primereact/inputtext';
 import { classNames } from 'primereact/utils';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 const LoginPage = () => {
+    const session = useSession();
+
+    console.log(session);
+
     const [checked, setChecked] = useState(false);
     const [userInfo, setUserInfo] = useState({ email: '', password: '' });
     const [userEmail, setUserEmail] = useState('');
