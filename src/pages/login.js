@@ -17,6 +17,8 @@ import Image from 'next/image';
 const LoginPage = () => {
     const [checked, setChecked] = useState(false);
     const [userInfo, setUserInfo] = useState({ email: '', password: '' });
+    const [userEmail, setUserEmail] = useState('');
+    const [userPassword, setUserPassword] = useState('');
     const { layoutConfig } = useContext(LayoutContext);
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
     const router = useRouter();
@@ -26,12 +28,13 @@ const LoginPage = () => {
     );
     const handleSubmit = async (data) => {
         data.preventDefault();
-        console.log(res);
+        console.log(userEmail, userPassword);
         const res = await signIn('credentials', {
-            email: userInfo.email,
-            password: userInfo.password,
+            email: userEmail,
+            password: userPassword,
             redirect: false,
         });
+        console.log(res);
     };
 
     return (
@@ -65,10 +68,10 @@ const LoginPage = () => {
                                     Email
                                 </label>
                                 <InputText
-                                    value={userInfo.email}
-                                    onChange={(val) =>
-                                        setUserInfo({ ...userInfo, email: val.value })
-                                    }
+                                    value={userEmail}
+                                    onChange={(val) => {
+                                        setUserEmail(val.target.value);
+                                    }}
                                     inputid="email"
                                     type="text"
                                     placeholder="Email address"
@@ -81,10 +84,10 @@ const LoginPage = () => {
                                     Password
                                 </label>
                                 <Password
-                                    value={userInfo.password}
-                                    onChange={(val) =>
-                                        setUserInfo({ ...userInfo, password: val.value })
-                                    }
+                                    value={userPassword}
+                                    onChange={(val) => {
+                                        setUserPassword(val.target.value);
+                                    }}
                                     inputid="password"
                                     placeholder="Password"
                                     toggleMask
@@ -110,9 +113,7 @@ const LoginPage = () => {
                                 <Button
                                     label="Sign In"
                                     className="w-full p-3 text-xl"
-                                    onClick={() => {
-                                        signIn();
-                                    }}
+                                    type="submit"
                                 />
                             </form>
                         </div>
