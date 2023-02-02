@@ -33,3 +33,7 @@ yarn-error.log*
 
 #other
 .env
+
+# lock-file
+yarn.lock
+package-lock.json
