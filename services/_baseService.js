@@ -2,7 +2,8 @@ import axios from 'axios';
 import { getSession } from 'next-auth/react';
 
 const apiCall = axios.create({
-    baseURL: process.env.BACKEND_API ?? 'http://localhost',
+    // baseURL: process.env.BACKEND_API ?? 'http://localhost',
+    baseURL: 'http://localhost:8000/api',
     headers: {
         'Content-Type': 'application/json',
     },

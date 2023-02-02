@@ -16,13 +16,11 @@ import Image from 'next/image';
 
 const LoginPage = () => {
     const session = useSession();
-
     console.log(session);
-
     const [checked, setChecked] = useState(false);
-    const [userInfo, setUserInfo] = useState({ email: '', password: '' });
     const [userEmail, setUserEmail] = useState('');
     const [userPassword, setUserPassword] = useState('');
+    const [loginLoading, setLoginLoading] = useState(false);
     const { layoutConfig } = useContext(LayoutContext);
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
     const router = useRouter();
@@ -31,14 +29,16 @@ const LoginPage = () => {
         { 'p-input-filled': layoutConfig.inputStyle === 'filled' }
     );
     const handleSubmit = async (data) => {
+        setLoginLoading(true);
         data.preventDefault();
-        console.log(userEmail, userPassword);
         const res = await signIn('credentials', {
             email: userEmail,
             password: userPassword,
             redirect: false,
+        }).then((data) => {
+            setLoginLoading(false);
+            console.log(data);
         });
-        console.log(res);
     };
 
     return (
@@ -118,7 +118,7 @@ const LoginPage = () => {
                                     label="Sign In"
                                     className="w-full p-3 text-xl"
                                     type="submit"
-                                />
+                                    loading={loginLoading}></Button>
                             </form>
                         </div>
                     </div>

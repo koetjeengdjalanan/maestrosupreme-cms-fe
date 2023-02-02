@@ -1,10 +1,10 @@
 import getConfig from 'next/config';
 import Link from 'next/link';
-import { signOut } from 'next-auth/react';
 import { classNames } from 'primereact/utils';
 import React, { forwardRef, useContext, useImperativeHandle, useRef } from 'react';
 import { LayoutContext } from './context/layoutcontext';
 import { TieredMenu } from 'primereact/tieredmenu';
+import Image from 'next/image';
 
 const AppTopbar = forwardRef((props, ref) => {
     const { layoutState, onMenuToggle, showProfileSidebar } = useContext(LayoutContext);
@@ -13,7 +13,6 @@ const AppTopbar = forwardRef((props, ref) => {
     const topbarmenubuttonRef = useRef(null);
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
     const profileMenuButtonRef = useRef(null);
-    const handleSignOut = () => signOut({ redirect: true, callbackUrl: '/signin' });
 
     useImperativeHandle(ref, () => ({
         menubutton: menubuttonRef.current,
@@ -144,7 +143,7 @@ const AppTopbar = forwardRef((props, ref) => {
         {
             label: 'Sign Out',
             icon: 'pi pi-fw pi-power-off',
-            onclick: { handleSignOut },
+            // onclick: { handleSignOut },
         },
     ];
     return (
@@ -160,11 +159,11 @@ const AppTopbar = forwardRef((props, ref) => {
             <Link legacyBehavior href="/">
                 <a className="layout-topbar-logo">
                     <>
-                        <img
+                        <Image
                             src={`${contextPath}/layout/images/ms-logo.svg`}
-                            width="47.22px"
-                            height={'35px'}
-                            widt={'true'}
+                            width={47.22}
+                            height={35}
+                            // widt={'true'}
                             alt="logo"
                         />
                         <span>MaestroSupreme-CMS</span>

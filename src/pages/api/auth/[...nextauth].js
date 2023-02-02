@@ -3,7 +3,6 @@ import NextAuth, { NextAuthOptions } from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { redirect } from 'next/dist/server/api-utils';
 import apiCall from 'services/_baseService';
-// import Auth0Provider from 'next-auth/providers/'
 
 const config = (token) => ({
     headers: {
@@ -14,12 +13,7 @@ const config = (token) => ({
 export const authOptions = {
     providers: [
         CredentialsProvider({
-            // The name to display on the sign in form (e.g. 'Sign in with...')
             name: 'Credentials',
-            // The credentials is used to generate a suitable form on the sign in page.
-            // You can specify whatever fields you are expecting to be submitted.
-            // e.g. domain, username, password, 2FA token, etc.
-            // You can pass any HTML attribute to the <input> tag through the object.
             credentials: {
                 email: {
                     label: 'Email',
@@ -28,7 +22,6 @@ export const authOptions = {
                 },
                 password: { label: 'Password', type: 'password' },
             },
-
             async authorize(credentials) {
                 const payload = {
                     email: credentials.email,
@@ -42,7 +35,6 @@ export const authOptions = {
                 });
                 const user = await res.json();
                 if (res.ok && user) {
-                    // console.log(user.data, 'ttd');
                     return user.data;
                 } else {
                     throw new Error('Credentials Is Invalid!');
@@ -52,8 +44,6 @@ export const authOptions = {
     ],
     callbacks: {
         async signIn({ user, account }) {
-            // console.log(user, account);
-            // Credentials
             if (account?.type === 'credentials' && user) {
                 return true;
             }
@@ -61,9 +51,7 @@ export const authOptions = {
         },
 
         async jwt({ token, user, account }) {
-            // console.log(account, 'kntl');
             if (user) {
-                // console.log(user);
                 return {
                     ...token,
                     accessToken: user?.access_token,
@@ -71,9 +59,6 @@ export const authOptions = {
                     tokenType: user?.token_type,
                 };
             }
-
-            // console.log(token);
-
             return token;
         },
 
@@ -89,44 +74,21 @@ export const authOptions = {
         },
 
         async redirect({ url, baseUrl }) {
-            // Allows relative callback URLs
             if (url.startsWith('/')) return `${baseUrl}${url}`;
-            // Allows callback URLs on the same origin
             else if (new URL(url).origin === baseUrl) return url;
             return baseUrl;
         },
     },
-
-    // jwt: {
-    //   secret: process.env.JWT_SECRET,
-    // },
     secret: process.env.JWT_SECRET,
-    jwt: {
-        // The maximum age of the NextAuth.js issued JWT in seconds.
-        // Defaults to `session.maxAge`.
-        maxAge: 60 * 60 * 24 * 30,
-        // You can define your own encode/decode functions for signing and encryption
-        // async encode() {},
-        // async decode() {},
-    },
-
-    session: {
-        strategy: 'jwt',
-        maxAge: 30 * 24 * 60 * 60, // 30 days
-        updateAge: 24 * 60 * 60, // 24 hours
-        generateSessionToken: () => {
-            return randomUUID?.() ?? randomBytes(32).toString('hex');
-        },
-    },
-
+    jwt: {},
+    session: {},
     pages: {
         signIn: '/login',
-        signOut: '/',
+        signOut: '/logout',
         error: '/login', // Error code passed in query string as ?error=
         verifyRequest: '/', // (used for check email message)
         newUser: '/', // New users will be directed here on first sign in (leave the property out if not of interest)
     },
-
     debug: process.env.NODE_ENV === 'development',
 };
 

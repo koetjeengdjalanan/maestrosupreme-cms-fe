@@ -24,8 +24,8 @@ const AppMenu = () => {
         {
             label: 'Event',
             items: [
-                { label: 'Form', icon: 'pi pi-fw pi-question', to: '' },
-                { label: 'Answers', icon: 'pi pi-fw pi-tags', to: '' },
+                { label: 'Form', icon: 'pi pi-fw pi-question', to: '/form' },
+                { label: 'Responses', icon: 'pi pi-fw pi-file', to: '/form/responses' },
             ],
         },
     ];
