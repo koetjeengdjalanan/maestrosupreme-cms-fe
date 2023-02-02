@@ -10,8 +10,11 @@ import AppTopbar from './AppTopbar';
 import AppConfig from './AppConfig';
 import { LayoutContext } from './context/layoutcontext';
 import PrimeReact from 'primereact/api';
+import { useSession, getSession, signOut } from 'next-auth/react';
 
-const Layout = (props) => {
+export default function Layout(props) {
+    const session = useSession();
+    console.log(session);
     const { layoutConfig, layoutState, setLayoutState } = useContext(LayoutContext);
     const topbarRef = useRef(null);
     const sidebarRef = useRef(null);
@@ -115,6 +118,8 @@ const Layout = (props) => {
         'p-ripple-disabled': !layoutConfig.ripple,
     });
 
+    const handleSignOut = () => signOut({ redirect: true, callbackUrl: '/login' });
+
     return (
         <React.Fragment>
             <Head>
@@ -154,6 +159,21 @@ const Layout = (props) => {
             </div>
         </React.Fragment>
     );
-};
+}
 
-export default Layout;
+export async function getServerSideProps({ req }) {
+    // const session = await getSession({ req });
+
+    if (!session) {
+        return {
+            redirect: {
+                destination: '/login',
+                permanent: false,
+            },
+        };
+    }
+
+    return {
+        props: { session },
+    };
+}

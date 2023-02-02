@@ -8,11 +8,11 @@ import '../styles/layout/layout.scss';
 import '../styles/demo/Demos.scss';
 import { SessionProvider } from 'next-auth/react';
 
-export default function MyApp({ Component, pageProps }) {
+export default function MyApp({ Component, pageProps: { session, ...pageProps } }) {
     if (Component.getLayout) {
         return (
             <LayoutProvider>
-                <SessionProvider>
+                <SessionProvider session={session}>
                     {Component.getLayout(<Component {...pageProps} />)}
                 </SessionProvider>
             </LayoutProvider>
@@ -20,7 +20,7 @@ export default function MyApp({ Component, pageProps }) {
     } else {
         return (
             <LayoutProvider>
-                <SessionProvider>
+                <SessionProvider session={session}>
                     <Layout>
                         <Component {...pageProps} />
                     </Layout>
