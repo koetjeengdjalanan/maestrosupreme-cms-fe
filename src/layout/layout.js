@@ -83,20 +83,24 @@ export default function Layout(props) {
         }
 
         layoutState.staticMenuMobileActive && blockBodyScroll();
-    }, [layoutState.overlayMenuActive, layoutState.staticMenuMobileActive]);
+    }, [
+        layoutState.overlayMenuActive,
+        layoutState.staticMenuMobileActive,
+        bindMenuOutsideClickListener,
+    ]);
 
     useEffect(() => {
         if (layoutState.profileSidebarVisible) {
             bindProfileMenuOutsideClickListener();
         }
-    }, [layoutState.profileSidebarVisible]);
+    }, [layoutState.profileSidebarVisible, bindProfileMenuOutsideClickListener]);
 
     useEffect(() => {
         router.events.on('routeChangeComplete', () => {
             hideMenu();
             hideProfileMenu();
         });
-    }, []);
+    }, [hideMenu, hideProfileMenu, router.events]);
 
     PrimeReact.ripple = true;
 

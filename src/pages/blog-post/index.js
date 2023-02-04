@@ -81,11 +81,13 @@ const PostsTable = () => {
 
         //imitate delay of a backend call
         loadLazyTimeout = setTimeout(() => {
-            CustomerService.getCustomers({ lazyEvent: JSON.stringify(lazyParams) }).then((data) => {
-                setTotalRecords(data.totalRecords);
-                setCustomers(data.customers);
-                setLoading(false);
-            });
+            customerService
+                .getCustomersMedium({ lazyEvent: JSON.stringify(lazyParams) })
+                .then((data) => {
+                    setTotalRecords(data.totalRecords);
+                    setCustomers(data.customers);
+                    setLoading(false);
+                });
         }, Math.random() * 1000 + 250);
     };
 
@@ -112,7 +114,7 @@ const PostsTable = () => {
         const selectAll = event.checked;
 
         if (selectAll) {
-            CustomerService.getCustomers().then((data) => {
+            customerService.getCustomersMedium().then((data) => {
                 setSelectAll(true);
                 setSelectedCustomers(data.customers);
             });

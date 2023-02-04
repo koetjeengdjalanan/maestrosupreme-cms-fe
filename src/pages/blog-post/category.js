@@ -94,6 +94,7 @@ const TagsTable = () => {
         productService.getProductsWithOrdersSmall().then((data) => setProducts(data));
         initFilters1();
     }, []);
+
     const getCustomers = (data) => {
         return [...(data || [])].map((d) => {
             d.date = new Date(d.date);
