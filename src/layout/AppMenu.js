@@ -28,6 +28,10 @@ const AppMenu = () => {
                 { label: 'Responses', icon: 'pi pi-fw pi-file', to: '/form/responses' },
             ],
         },
+        {
+            label: 'Site Setting',
+            items: [{ label: 'Content', icon: 'pi pi-fw pi-th-large', to: '/site-settings' }],
+        },
     ];
 
     return (

@@ -60,7 +60,7 @@ export default function Dashboard() {
             .get('/admin')
             .then((res) => {
                 setDashData(res.data);
-                console.logo(res.data);
+                console.log(res.data);
             })
             .catch((e) => console.log(e));
     }, []);
@@ -91,12 +91,12 @@ export default function Dashboard() {
                             <i className="pi pi-megaphone text-blue-500 text-xl" />
                         </div>
                     </div>
-                    <div class="white-space-nowrap overflow-hidden text-overflow-ellipsis">
+                    <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
                         <span className="text-green-500 font-medium">
                             {dashData?.post_last?.post?.author?.name}
                         </span>
                     </div>
-                    <div class="white-space-nowrap overflow-hidden text-overflow-ellipsis">
+                    <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
                         <span className="text-500 over">{dashData?.post_last?.post?.title}</span>
                     </div>
                 </div>
@@ -136,7 +136,7 @@ export default function Dashboard() {
                             <i className="pi pi-map-marker text-orange-500 text-xl" />
                         </div>
                     </div>
-                    <div class="flex flex-row gap-4">
+                    <div className="flex flex-row gap-4">
                         <div className="flex flex-column">
                             <span className="text-500">Bounce</span>
                             <span className="text-500">Blog</span>
@@ -167,12 +167,12 @@ export default function Dashboard() {
                             <i className="pi pi-envelope text-cyan-500 text-xl" />
                         </div>
                     </div>
-                    <div class="white-space-nowrap overflow-hidden text-overflow-ellipsis">
+                    <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
                         <span className="text-green-500 font-medium">
                             {dashData?.post_last?.post?.author?.name}
                         </span>
                     </div>
-                    <div class="white-space-nowrap overflow-hidden text-overflow-ellipsis">
+                    <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
                         <span className="text-500 over">{dashData?.post_last?.post?.title}</span>
                     </div>
                 </div>

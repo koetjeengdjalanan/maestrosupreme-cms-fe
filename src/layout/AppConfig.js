@@ -77,12 +77,11 @@ const AppConfig = (props) => {
         setLayoutConfig((prevState) => ({ ...prevState, scale: prevState.scale + 1 }));
     };
 
-    const applyScale = () => {
-        document.documentElement.style.fontSize = layoutConfig.scale + 'px';
-    };
-
     useEffect(() => {
-        applyScale();
+        const applyScale = () => {
+            document.documentElement.style.fontSize = layoutConfig.scale + 'px';
+        };
+        return applyScale();
     }, [layoutConfig.scale]);
 
     return (

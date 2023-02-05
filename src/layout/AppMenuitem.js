@@ -30,7 +30,7 @@ const AppMenuitem = (props) => {
         return () => {
             router.events.off('routeChangeComplete', onRouteChange);
         };
-    }, []);
+    }, [item.to, key, router.events, router.pathname, setActiveMenu]);
 
     const itemClick = (event) => {
         //avoid processing disabled items
@@ -53,7 +53,7 @@ const AppMenuitem = (props) => {
         <CSSTransition
             timeout={{ enter: 1000, exit: 450 }}
             classNames="layout-submenu"
-            in={props.root ? true : active}
+            // in={props.root ? true : active}
             key={item.label}>
             <ul>
                 {item.items.map((child, i) => {
