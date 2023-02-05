@@ -14,6 +14,27 @@ import { LayoutContext } from './context/layoutcontext';
 
 export default function Layout(props) {
   const router = useRouter();
+  const { status } = useSession();
+
+  useEffect(() => {
+    const redirect = () => {
+      if (status === 'authenticated') return;
+      if (status === 'unauthenticated') {
+        router.replace(
+          {
+            pathname: '/login',
+            query: {
+              unauthorized: true,
+              callbackURL: encodeURI(router.asPath),
+            },
+          },
+          '/login',
+          { shallow: true }
+        );
+      }
+    };
+    return redirect();
+  }, [router, status]);
 
   const { layoutConfig, layoutState, setLayoutState } =
     useContext(LayoutContext);
@@ -135,26 +156,8 @@ export default function Layout(props) {
     'p-ripple-disabled': !layoutConfig.ripple,
   });
 
-  const { status } = useSession();
-
   if (status === 'loading') {
     return <p>Loading...</p>;
-  }
-
-  if (status === 'unauthenticated') {
-    router.replace(
-      {
-        pathname: '/login',
-        query: {
-          unauthorized: true,
-          callbackURL: encodeURI(router.asPath),
-        },
-      },
-      '/login',
-      { shallow: true }
-    );
-
-    return null;
   }
 
   return (

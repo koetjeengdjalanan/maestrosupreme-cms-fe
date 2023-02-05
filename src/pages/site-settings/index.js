@@ -18,7 +18,7 @@ function SiteSettings() {
   return (
     <Accordion activeIndex={0}>
       <AccordionTab header="Hero">
-        <HeroInput data={data} onUpdate={handleUpdate} />
+        <HeroInput data={data?.['1']} onUpdate={handleUpdate} />
       </AccordionTab>
       <AccordionTab header="Advantage-1">
         <AdvantageInput data={data} onUpdate={handleUpdate} />

@@ -1,6 +1,7 @@
 'use client';
 
-import { getSession, signIn, useSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth';
+import { signIn } from 'next-auth/react';
 import getConfig from 'next/config';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,19 +14,16 @@ import { classNames } from 'primereact/utils';
 import React, { useContext, useState } from 'react';
 import AppConfig from '../layout/AppConfig';
 import { LayoutContext } from '../layout/context/layoutcontext';
-import { getServerSession } from 'next-auth';
 import { authOptions } from './api/auth/[...nextauth]';
 
 const LoginPage = () => {
-  const session = useSession();
-  console.log(session);
+  const router = useRouter();
   const [checked, setChecked] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const { layoutConfig } = useContext(LayoutContext);
   const contextPath = getConfig().publicRuntimeConfig.contextPath;
-  const router = useRouter();
   const containerClassName = classNames(
     'surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden',
     { 'p-input-filled': layoutConfig.inputStyle === 'filled' }
