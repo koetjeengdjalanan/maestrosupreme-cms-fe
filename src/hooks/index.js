@@ -1,0 +1,1 @@
+export { useMainContent } from './useMainContent';

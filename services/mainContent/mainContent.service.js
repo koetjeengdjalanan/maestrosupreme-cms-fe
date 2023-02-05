@@ -1,10 +1,14 @@
-const { default: apiCall } = require('services/_baseService');
+import apiCall from '../_baseService';
 
 const mainContentService = {
   async getMainContent() {
-    return ({ data } = await apiCall.get());
+    const { data } = await apiCall.get('/maincontent');
+    return data;
   },
-  async updateMainContent(data) {
-    return ({ data } = await apiCall.post('/'));
+  async updateMainContent(payload) {
+    const { data } = await apiCall.post('/');
+    return data;
   },
 };
+
+export default mainContentService;

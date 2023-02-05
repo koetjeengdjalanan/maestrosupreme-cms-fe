@@ -15,18 +15,12 @@ import { LayoutContext } from './context/layoutcontext';
 export default function Layout(props) {
   const router = useRouter();
 
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      router.push('/');
-      // The user is not authenticated, handle it here.
-    },
-  });
   const { layoutConfig, layoutState, setLayoutState } =
     useContext(LayoutContext);
   const topbarRef = useRef(null);
   const sidebarRef = useRef(null);
   const contextPath = getConfig().publicRuntimeConfig.contextPath;
+
   const [bindMenuOutsideClickListener, unbindMenuOutsideClickListener] =
     useEventListener({
       type: 'click',
@@ -113,6 +107,11 @@ export default function Layout(props) {
       hideMenu();
       hideProfileMenu();
     });
+    return () =>
+      router.events.on('routeChangeComplete', () => {
+        hideMenu();
+        hideProfileMenu();
+      });
   }, [hideMenu, hideProfileMenu, router.events]);
 
   PrimeReact.ripple = true;
@@ -136,8 +135,15 @@ export default function Layout(props) {
     'p-ripple-disabled': !layoutConfig.ripple,
   });
 
-  const handleSignOut = () =>
-    signOut({ redirect: true, callbackUrl: '/login' });
+  const { status } = useSession();
+
+  if (status === 'loading') {
+    return <p>Loading...</p>;
+  }
+
+  if (status === 'unauthenticated') {
+    return router.push('/');
+  }
 
   return (
     <React.Fragment>
