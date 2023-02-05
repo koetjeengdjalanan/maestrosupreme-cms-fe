@@ -33,8 +33,7 @@ export function HeroInput(props) {
                 {isEdit ? (
                   <InputText
                     name="title"
-                    // defaultValue={data?.title}
-                    value={values?.title}
+                    value={values.title}
                     onChange={e => setFieldValue('title', e.target.value)}
                     className="w-full"
                   />
@@ -52,7 +51,7 @@ export function HeroInput(props) {
                   <InputTextarea
                     onChange={e => setFieldValue('content', e.target.value)}
                     name="content"
-                    value={values?.content}
+                    value={values.content}
                     rows={5}
                     className="w-full"
                   />

@@ -70,6 +70,7 @@ export const authOptions = {
         '/auth/profile',
         config(token?.accessToken)
       );
+      console.log(userDetails);
 
       session.user = userDetails;
       return { ...session, ...token };
