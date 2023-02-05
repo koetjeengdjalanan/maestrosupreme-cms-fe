@@ -8,24 +8,21 @@ import '../styles/layout/layout.scss';
 import '../styles/demo/Demos.scss';
 import { SessionProvider } from 'next-auth/react';
 
-export default function MyApp({ Component, pageProps: { session, ...pageProps } }) {
-    if (Component.getLayout) {
-        return (
-            <LayoutProvider>
-                <SessionProvider session={session}>
-                    {Component.getLayout(<Component {...pageProps} />)}
-                </SessionProvider>
-            </LayoutProvider>
-        );
-    } else {
-        return (
-            <LayoutProvider>
-                <SessionProvider session={session}>
-                    <Layout>
-                        <Component {...pageProps} />
-                    </Layout>
-                </SessionProvider>
-            </LayoutProvider>
-        );
-    }
+export default function MyApp({
+  Component,
+  pageProps: { session, ...pageProps },
+}) {
+  return (
+    <SessionProvider session={session}>
+      <LayoutProvider>
+        {Component.getLayout ? (
+          Component.getLayout(<Component {...pageProps} />)
+        ) : (
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        )}
+      </LayoutProvider>
+    </SessionProvider>
+  );
 }

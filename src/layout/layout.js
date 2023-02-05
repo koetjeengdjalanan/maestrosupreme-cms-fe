@@ -1,183 +1,189 @@
+import { signOut, useSession } from 'next-auth/react';
 import getConfig from 'next/config';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import PrimeReact from 'primereact/api';
 import { useEventListener, useUnmountEffect } from 'primereact/hooks';
-import { classNames, DomHandler } from 'primereact/utils';
-import React, { useContext, useEffect, useRef } from 'react';
+import { DomHandler, classNames } from 'primereact/utils';
+import React, { useCallback, useContext, useEffect, useRef } from 'react';
+import AppConfig from './AppConfig';
 import AppFooter from './AppFooter';
 import AppSidebar from './AppSidebar';
 import AppTopbar from './AppTopbar';
-import AppConfig from './AppConfig';
 import { LayoutContext } from './context/layoutcontext';
-import PrimeReact from 'primereact/api';
-import { useSession, getSession, signOut } from 'next-auth/react';
 
 export default function Layout(props) {
-    const session = useSession();
-    console.log(session);
-    const { layoutConfig, layoutState, setLayoutState } = useContext(LayoutContext);
-    const topbarRef = useRef(null);
-    const sidebarRef = useRef(null);
-    const contextPath = getConfig().publicRuntimeConfig.contextPath;
-    const router = useRouter();
-    const [bindMenuOutsideClickListener, unbindMenuOutsideClickListener] = useEventListener({
-        type: 'click',
-        listener: (event) => {
-            const isOutsideClicked = !(
-                sidebarRef.current.isSameNode(event.target) ||
-                sidebarRef.current.contains(event.target) ||
-                topbarRef.current.menubutton.isSameNode(event.target) ||
-                topbarRef.current.menubutton.contains(event.target)
-            );
+  const router = useRouter();
 
-            if (isOutsideClicked) {
-                hideMenu();
-            }
-        },
-    });
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push('/');
+      // The user is not authenticated, handle it here.
+    },
+  });
+  const { layoutConfig, layoutState, setLayoutState } =
+    useContext(LayoutContext);
+  const topbarRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const contextPath = getConfig().publicRuntimeConfig.contextPath;
+  const [bindMenuOutsideClickListener, unbindMenuOutsideClickListener] =
+    useEventListener({
+      type: 'click',
+      listener: event => {
+        const isOutsideClicked = !(
+          sidebarRef.current.isSameNode(event.target) ||
+          sidebarRef.current.contains(event.target) ||
+          topbarRef.current.menubutton.isSameNode(event.target) ||
+          topbarRef.current.menubutton.contains(event.target)
+        );
 
-    const [bindProfileMenuOutsideClickListener, unbindProfileMenuOutsideClickListener] =
-        useEventListener({
-            type: 'click',
-            listener: (event) => {
-                const isOutsideClicked = !(
-                    topbarRef.current.topbarmenu.isSameNode(event.target) ||
-                    topbarRef.current.topbarmenu.contains(event.target) ||
-                    topbarRef.current.topbarmenubutton.isSameNode(event.target) ||
-                    topbarRef.current.topbarmenubutton.contains(event.target)
-                );
-
-                if (isOutsideClicked) {
-                    hideProfileMenu();
-                }
-            },
-        });
-
-    const hideMenu = () => {
-        setLayoutState((prevLayoutState) => ({
-            ...prevLayoutState,
-            overlayMenuActive: false,
-            staticMenuMobileActive: false,
-            menuHoverActive: false,
-        }));
-        unbindMenuOutsideClickListener();
-        unblockBodyScroll();
-    };
-
-    const hideProfileMenu = () => {
-        setLayoutState((prevLayoutState) => ({ ...prevLayoutState, profileSidebarVisible: false }));
-        unbindProfileMenuOutsideClickListener();
-    };
-
-    const blockBodyScroll = () => {
-        DomHandler.addClass('blocked-scroll');
-    };
-
-    const unblockBodyScroll = () => {
-        DomHandler.removeClass('blocked-scroll');
-    };
-
-    useEffect(() => {
-        if (layoutState.overlayMenuActive || layoutState.staticMenuMobileActive) {
-            bindMenuOutsideClickListener();
+        if (isOutsideClicked) {
+          hideMenu();
         }
-
-        layoutState.staticMenuMobileActive && blockBodyScroll();
-    }, [
-        layoutState.overlayMenuActive,
-        layoutState.staticMenuMobileActive,
-        bindMenuOutsideClickListener,
-    ]);
-
-    useEffect(() => {
-        if (layoutState.profileSidebarVisible) {
-            bindProfileMenuOutsideClickListener();
-        }
-    }, [layoutState.profileSidebarVisible, bindProfileMenuOutsideClickListener]);
-
-    useEffect(() => {
-        router.events.on('routeChangeComplete', () => {
-            hideMenu();
-            hideProfileMenu();
-        });
-    }, [hideMenu, hideProfileMenu, router.events]);
-
-    PrimeReact.ripple = true;
-
-    useUnmountEffect(() => {
-        unbindMenuOutsideClickListener();
-        unbindProfileMenuOutsideClickListener();
+      },
     });
 
-    const containerClass = classNames('layout-wrapper', {
-        'layout-theme-light': layoutConfig.colorScheme === 'light',
-        'layout-theme-dark': layoutConfig.colorScheme === 'dark',
-        'layout-overlay': layoutConfig.menuMode === 'overlay',
-        'layout-static': layoutConfig.menuMode === 'static',
-        'layout-static-inactive':
-            layoutState.staticMenuDesktopInactive && layoutConfig.menuMode === 'static',
-        'layout-overlay-active': layoutState.overlayMenuActive,
-        'layout-mobile-active': layoutState.staticMenuMobileActive,
-        'p-input-filled': layoutConfig.inputStyle === 'filled',
-        'p-ripple-disabled': !layoutConfig.ripple,
-    });
+  const [
+    bindProfileMenuOutsideClickListener,
+    unbindProfileMenuOutsideClickListener,
+  ] = useEventListener({
+    type: 'click',
+    listener: event => {
+      const isOutsideClicked = !(
+        topbarRef.current.topbarmenu.isSameNode(event.target) ||
+        topbarRef.current.topbarmenu.contains(event.target) ||
+        topbarRef.current.topbarmenubutton.isSameNode(event.target) ||
+        topbarRef.current.topbarmenubutton.contains(event.target)
+      );
 
-    const handleSignOut = () => signOut({ redirect: true, callbackUrl: '/login' });
+      if (isOutsideClicked) {
+        hideProfileMenu();
+      }
+    },
+  });
 
-    return (
-        <React.Fragment>
-            <Head>
-                <title>Maestro Supreme CMS</title>
-                <meta charSet="UTF-8" />
-                <meta
-                    name="description"
-                    content="The ultimate collection of design-agnostic, flexible and accessible React UI Components."
-                />
-                <meta name="robots" content="index, follow" />
-                <meta name="viewport" content="initial-scale=1, width=device-width" />
-                <meta property="og:type" content="website"></meta>
-                <meta property="og:title" content="Maestro Supreme CMS"></meta>
-                <meta property="og:url" content="https://www.primefaces.org/sakai-react"></meta>
-                <meta
-                    property="og:description"
-                    content="The ultimate collection of design-agnostic, flexible and accessible React UI Components."
-                />
-                <meta
-                    property="og:image"
-                    content="https://www.primefaces.org/static/social/sakai-nextjs.png"></meta>
-                <meta property="og:ttl" content="604800"></meta>
-                <link rel="icon" href={`${contextPath}/favicon.ico`} type="image/x-icon"></link>
-            </Head>
+  const hideMenu = useCallback(() => {
+    setLayoutState(prevLayoutState => ({
+      ...prevLayoutState,
+      overlayMenuActive: false,
+      staticMenuMobileActive: false,
+      menuHoverActive: false,
+    }));
+    unbindMenuOutsideClickListener();
+    unblockBodyScroll();
+  }, [setLayoutState, unbindMenuOutsideClickListener]);
 
-            <div className={containerClass}>
-                <AppTopbar ref={topbarRef} />
-                <div ref={sidebarRef} className="layout-sidebar">
-                    <AppSidebar />
-                </div>
-                <div className="layout-main-container">
-                    <div className="layout-main">{props.children}</div>
-                    <AppFooter />
-                </div>
-                <AppConfig />
-                <div className="layout-mask"></div>
-            </div>
-        </React.Fragment>
-    );
-}
+  const hideProfileMenu = useCallback(() => {
+    setLayoutState(prevLayoutState => ({
+      ...prevLayoutState,
+      profileSidebarVisible: false,
+    }));
+    unbindProfileMenuOutsideClickListener();
+  }, [setLayoutState, unbindProfileMenuOutsideClickListener]);
 
-export async function getServerSideProps({ req }) {
-    // const session = await getSession({ req });
+  const blockBodyScroll = () => {
+    DomHandler.addClass('blocked-scroll');
+  };
 
-    if (!session) {
-        return {
-            redirect: {
-                destination: '/login',
-                permanent: false,
-            },
-        };
+  const unblockBodyScroll = () => {
+    DomHandler.removeClass('blocked-scroll');
+  };
+
+  useEffect(() => {
+    if (layoutState.overlayMenuActive || layoutState.staticMenuMobileActive) {
+      bindMenuOutsideClickListener();
     }
 
-    return {
-        props: { session },
-    };
+    layoutState.staticMenuMobileActive && blockBodyScroll();
+  }, [
+    layoutState.overlayMenuActive,
+    layoutState.staticMenuMobileActive,
+    bindMenuOutsideClickListener,
+  ]);
+
+  useEffect(() => {
+    if (layoutState.profileSidebarVisible) {
+      bindProfileMenuOutsideClickListener();
+    }
+  }, [layoutState.profileSidebarVisible, bindProfileMenuOutsideClickListener]);
+
+  useEffect(() => {
+    router.events.on('routeChangeComplete', () => {
+      hideMenu();
+      hideProfileMenu();
+    });
+  }, [hideMenu, hideProfileMenu, router.events]);
+
+  PrimeReact.ripple = true;
+
+  useUnmountEffect(() => {
+    unbindMenuOutsideClickListener();
+    unbindProfileMenuOutsideClickListener();
+  });
+
+  const containerClass = classNames('layout-wrapper', {
+    'layout-theme-light': layoutConfig.colorScheme === 'light',
+    'layout-theme-dark': layoutConfig.colorScheme === 'dark',
+    'layout-overlay': layoutConfig.menuMode === 'overlay',
+    'layout-static': layoutConfig.menuMode === 'static',
+    'layout-static-inactive':
+      layoutState.staticMenuDesktopInactive &&
+      layoutConfig.menuMode === 'static',
+    'layout-overlay-active': layoutState.overlayMenuActive,
+    'layout-mobile-active': layoutState.staticMenuMobileActive,
+    'p-input-filled': layoutConfig.inputStyle === 'filled',
+    'p-ripple-disabled': !layoutConfig.ripple,
+  });
+
+  const handleSignOut = () =>
+    signOut({ redirect: true, callbackUrl: '/login' });
+
+  return (
+    <React.Fragment>
+      <Head>
+        <title>Maestro Supreme CMS</title>
+        <meta charSet="UTF-8" />
+        <meta
+          name="description"
+          content="The ultimate collection of design-agnostic, flexible and accessible React UI Components."
+        />
+        <meta name="robots" content="index, follow" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <meta property="og:type" content="website"></meta>
+        <meta property="og:title" content="Maestro Supreme CMS"></meta>
+        <meta
+          property="og:url"
+          content="https://www.primefaces.org/sakai-react"
+        ></meta>
+        <meta
+          property="og:description"
+          content="The ultimate collection of design-agnostic, flexible and accessible React UI Components."
+        />
+        <meta
+          property="og:image"
+          content="https://www.primefaces.org/static/social/sakai-nextjs.png"
+        ></meta>
+        <meta property="og:ttl" content="604800"></meta>
+        <link
+          rel="icon"
+          href={`${contextPath}/favicon.ico`}
+          type="image/x-icon"
+        ></link>
+      </Head>
+
+      <div className={containerClass}>
+        <AppTopbar ref={topbarRef} />
+        <div ref={sidebarRef} className="layout-sidebar">
+          <AppSidebar />
+        </div>
+        <div className="layout-main-container">
+          <div className="layout-main">{props.children}</div>
+          <AppFooter />
+        </div>
+        <AppConfig />
+        <div className="layout-mask"></div>
+      </div>
+    </React.Fragment>
+  );
 }
