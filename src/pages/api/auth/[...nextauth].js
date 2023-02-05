@@ -86,7 +86,7 @@ export const authOptions = {
   session: {},
   pages: {
     signIn: '/login',
-    signOut: '/logout',
+    signOut: '/login',
     error: '/login', // Error code passed in query string as ?error=
     verifyRequest: '/', // (used for check email message)
     newUser: '/', // New users will be directed here on first sign in (leave the property out if not of interest)

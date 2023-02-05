@@ -1,1 +1,1 @@
-export { useMainContent } from './useMainContent';
+export const bapak = ' aku';

@@ -142,7 +142,19 @@ export default function Layout(props) {
   }
 
   if (status === 'unauthenticated') {
-    return router.push('/');
+    router.replace(
+      {
+        pathname: '/login',
+        query: {
+          unauthorized: true,
+          callbackURL: encodeURI(router.asPath),
+        },
+      },
+      '/login',
+      { shallow: true }
+    );
+
+    return null;
   }
 
   return (
