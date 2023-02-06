@@ -14,12 +14,23 @@ import { LayoutContext } from './context/layoutcontext';
 
 export default function Layout(props) {
   const router = useRouter();
-  const { status } = useSession();
+  const session = useSession();
+  console.log(router.pathname);
+  console.log(session);
+
+  useEffect(() => {
+    if (session?.data?.error) {
+      signOut({
+        callbackUrl: router.pathname,
+        redirect: '/login',
+      }); // Force sign in to hopefully resolve error
+    }
+  }, [router.pathname, session]);
 
   useEffect(() => {
     const redirect = () => {
-      if (status === 'authenticated') return;
-      if (status === 'unauthenticated') {
+      if (session.status === 'authenticated') return;
+      if (session.status === 'unauthenticated') {
         router.replace(
           {
             pathname: '/login',
@@ -34,7 +45,7 @@ export default function Layout(props) {
       }
     };
     return redirect();
-  }, [router, status]);
+  }, [router, session.status]);
 
   const { layoutConfig, layoutState, setLayoutState } =
     useContext(LayoutContext);

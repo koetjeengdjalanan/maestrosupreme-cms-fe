@@ -10,6 +10,7 @@ import Layout from '../layout/layout';
 import '../styles/demo/Demos.scss';
 import '../styles/layout/layout.scss';
 import { authOptions } from './api/auth/[...nextauth]';
+import SessionLoader from '@/hoc/SessionLoader';
 
 export default function MyApp({
   Component,
@@ -19,13 +20,15 @@ export default function MyApp({
     <QueryClientProvider client={queryClient}>
       <LayoutProvider>
         <SessionProvider session={session}>
-          {Component.getLayout ? (
-            Component.getLayout(<Component {...pageProps} />)
-          ) : (
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          )}
+          <SessionLoader>
+            {Component.getLayout ? (
+              Component.getLayout(<Component {...pageProps} />)
+            ) : (
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            )}
+          </SessionLoader>
         </SessionProvider>
       </LayoutProvider>
     </QueryClientProvider>

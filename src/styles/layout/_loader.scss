@@ -1,0 +1,30 @@
+.loader-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 126px);
+  .loader {
+    animation: rotate 2s infinite;
+    height: 50px;
+    width: 50px;
+    &::before,
+    &::after {
+      border-radius: 50%;
+      content: '';
+      display: block;
+      height: 20px;
+      width: 20px;
+    }
+    &::before {
+      animation: ball1 2s infinite;
+      background-color: #ffd700;
+      box-shadow: 30px 0 0 #ffd700;
+      margin-bottom: 10px;
+    }
+    &::after {
+      animation: ball2 2s infinite;
+      background-color: #ffd700;
+      box-shadow: 30px 0 0 #ffd700;
+    }
+  }
+}

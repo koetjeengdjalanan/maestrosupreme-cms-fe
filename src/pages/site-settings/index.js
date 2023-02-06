@@ -4,21 +4,35 @@ import {
   OfferingInput,
   ReviewInput,
 } from '@/components/Input/SiteSettings';
+import Loader from '@/components/Loader';
 import { useMainContent, useUpdateMainContent } from '@/hooks/mainContent';
 import { Accordion, AccordionTab } from 'primereact/accordion';
 
 function SiteSettings() {
-  const { data } = useMainContent();
-  const { mutate: updateContent } = useUpdateMainContent();
+  const { data, isLoading } = useMainContent();
+  const { mutateAsync: updateContent, isLoading: updating } =
+    useUpdateMainContent();
 
-  const handleUpdate = newContent => {
-    updateContent(newContent);
+  const handleUpdate = (newContent, { onSuccess, onError, onSettled }) => {
+    try {
+      updateContent(newContent, {
+        onSuccess: () => {
+          onSuccess && onSuccess();
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
   };
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <Accordion activeIndex={0}>
       <AccordionTab header="Hero">
-        <HeroInput data={data?.['1']} onUpdate={handleUpdate} />
+        <HeroInput data={data?.['1']} sectionId="1" onUpdate={handleUpdate} />
       </AccordionTab>
       <AccordionTab header="Advantage-1">
         <AdvantageInput data={data} onUpdate={handleUpdate} />

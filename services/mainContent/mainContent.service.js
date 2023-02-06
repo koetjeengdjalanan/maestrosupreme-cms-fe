@@ -11,12 +11,9 @@ const mainContentService = {
     console.log(user?.id);
     const newPayload = {
       ...payload,
-      id: user?.id,
+      user_id: user?.id,
     };
-    const { data } = await apiCall.post(
-      `/admin/maincontent/update`,
-      newPayload
-    );
+    const data = await apiCall.post(`/admin/maincontent/update`, newPayload);
     return data;
   },
 };

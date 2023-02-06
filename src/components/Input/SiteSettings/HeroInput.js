@@ -1,14 +1,13 @@
-import { Formik, useFormik } from 'formik';
+import { Formik } from 'formik';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { FileUploader } from '../BaseInput';
 
 export function HeroInput(props) {
-  const { data, onUpdate } = props;
+  const { data, onUpdate, sectionId } = props;
   const [isEdit, setIsEdit] = useState(false);
-
-  console.log(data);
 
   return (
     <div className="p-3">
@@ -18,14 +17,23 @@ export function HeroInput(props) {
           content: data?.content?.body,
         }}
         onSubmit={(values, actions) => {
-          setTimeout(() => {
-            console.log(values);
-            console.log(JSON.stringify(values, null, 2));
-            actions.setSubmitting(false);
-          }, 1000);
+          const payload = {
+            section: sectionId,
+            ...data,
+            ...values,
+            content: JSON.stringify({
+              body: values?.content,
+            }),
+          };
+          onUpdate(payload, {
+            onSuccess: () => {
+              actions.setSubmitting(false);
+              setIsEdit(false);
+            },
+          });
         }}
       >
-        {({ handleSubmit, values, setFieldValue }) => (
+        {({ handleSubmit, values, setFieldValue, isSubmitting }) => (
           <form onSubmit={handleSubmit}>
             <div className="field grid">
               <label className="col-12 mb-2 md:col-2 md:mb-0">Title</label>
@@ -38,11 +46,11 @@ export function HeroInput(props) {
                     className="w-full"
                   />
                 ) : (
-                  <p></p>
+                  <p className="mb-2">{data?.title}</p>
                 )}
               </div>
             </div>
-            <div className="field grid">
+            <div className="field grid align-items-start">
               <label className="col-12 mb-2 md:col-2 md:mb-0">
                 Description
               </label>
@@ -56,13 +64,27 @@ export function HeroInput(props) {
                     className="w-full"
                   />
                 ) : (
-                  <p></p>
+                  <p className="mb-2">{data?.content?.body}</p>
                 )}
               </div>
             </div>
+            <div className="field ">
+              <FileUploader />
+            </div>
             <div className={isEdit ? 'field grid' : 'hidden'}>
-              <div className="flex px-2 justify-content-end w-full">
-                <Button className={!isEdit && 'hidden'} type="submit">
+              <div className="flex gap-3 px-2 justify-content-end w-full">
+                <Button
+                  className={!isEdit ? 'hidden' : 'p-button-danger'}
+                  onClick={() => setIsEdit(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className={!isEdit && 'hidden'}
+                  type="submit"
+                  loading={isSubmitting}
+                >
                   Submit
                 </Button>
               </div>

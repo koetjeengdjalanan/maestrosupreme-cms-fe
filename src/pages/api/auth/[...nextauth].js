@@ -1,6 +1,7 @@
 import axios from 'axios';
 import NextAuth, { NextAuthOptions } from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { signOut } from 'next-auth/react';
 import { redirect } from 'next/dist/server/api-utils';
 import apiCall from 'services/_baseService';
 
@@ -11,6 +12,50 @@ const config = token => ({
     }`,
   },
 });
+
+const getUserDetail = async token => {
+  const user = await apiCall.get('/auth/profile', config(token));
+  return user;
+};
+
+async function refreshAccessToken(token) {
+  if (token.tokenExpired && Date.now() < token.tokenExpired) {
+    try {
+      const refreshedTokens = await apiCall.get(
+        '/auth/refresh_token',
+        config(token?.accessToken)
+      );
+
+      const newUser = await getUserDetail(refreshedTokens?.data?.access_token);
+      return {
+        ...token,
+        accessToken: refreshedTokens?.data?.access_token,
+        tokenExpired: (Date.now() + 2 * 60 * 10) * 1000,
+        tokenType: refreshedTokens?.data?.token_type,
+        user: newUser?.data,
+        error: null,
+      };
+    } catch (error) {
+      console.log(error, 'error');
+
+      return {
+        ...token,
+        error: 'RefreshAccessTokenError',
+      };
+    }
+  }
+
+  if (token.tokenExpired && Date.now() >= token.tokenExpired) {
+    return {
+      ...token,
+      error: 'RefreshAccessTokenExpired',
+    };
+  }
+  return {
+    ...token,
+    error: 'RefreshAccessUnavailable',
+  };
+}
 
 export const authOptions = {
   providers: [
@@ -25,21 +70,15 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const payload = {
+        const url = `${process.env.NEXT_PUBLIC_BACKEND_API}/auth/login`;
+        const { data } = await axios.post(url, {
           email: credentials.email,
           password: credentials.password,
-        };
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_API}/auth/login`;
-        const res = await fetch(url, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' },
         });
-        const user = await res.json();
-        if (res.ok && user) {
-          return user.data;
+        if (data?.data) {
+          return data.data;
         } else {
-          throw new Error('Credentials Is Invalid!');
+          return null;
         }
       },
     }),
@@ -52,27 +91,18 @@ export const authOptions = {
       return false;
     },
 
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
-        return {
-          ...token,
-          accessToken: user?.access_token,
-          // refreshToken: user?.refreshToken,
-          tokenType: user?.token_type,
-        };
+        token.accessToken = user.access_token;
+        token.tokenExpired = (Date.now() + 2 * 60 * 10) * 1000;
       }
-      return token;
+
+      return refreshAccessToken(token);
     },
 
-    async session({ session, token, user }) {
+    async session({ session, token }) {
       // Send properties to the client, like an access_token from a provider.
-      const { data: userDetails } = await apiCall.get(
-        '/auth/profile',
-        config(token?.accessToken)
-      );
-      console.log(userDetails);
-
-      session.user = userDetails;
+      // console.log(token, 'token');
       return { ...session, ...token };
     },
 
@@ -82,12 +112,11 @@ export const authOptions = {
       return baseUrl;
     },
   },
-  secret: process.env.JWT_SECRET,
-  jwt: {},
-  session: {},
+  // secret: process.env.JWT_SECRET,
+
   pages: {
     signIn: '/login',
-    signOut: '/login',
+    signOut: '/signOut',
     error: '/login', // Error code passed in query string as ?error=
     verifyRequest: '/', // (used for check email message)
     newUser: '/', // New users will be directed here on first sign in (leave the property out if not of interest)
