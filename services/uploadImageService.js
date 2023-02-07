@@ -12,10 +12,7 @@ const uploadImageService = {
         'Content-Type': 'multipart/form-data',
       },
     });
-    if (response?.data) {
-      return `https://${response?.data}`;
-    }
-    return response;
+    return response?.data;
   },
 };
 

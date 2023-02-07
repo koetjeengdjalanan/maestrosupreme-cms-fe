@@ -9,13 +9,15 @@ export function HeroInput(props) {
   const { data, onUpdate, sectionId } = props;
   const [isEdit, setIsEdit] = useState(false);
 
+  console.log(data);
+
   return (
     <div className="p-3">
       <Formik
         initialValues={{
-          title: data?.title,
-          content: data?.content?.body,
-          Image: data?.image,
+          title: data.title,
+          content: data.content?.body,
+          image: data.image,
         }}
         onSubmit={(values, actions) => {
           const payload = {

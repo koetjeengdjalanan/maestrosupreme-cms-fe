@@ -32,7 +32,6 @@ async function refreshAccessToken(token) {
         '/auth/profile',
         config(refreshedTokens.data.access_token)
       );
-      console.log(newUser);
 
       return {
         ...token,
