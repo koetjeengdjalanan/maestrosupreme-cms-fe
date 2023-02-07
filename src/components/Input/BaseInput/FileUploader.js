@@ -1,5 +1,4 @@
 import { useUploadImage } from '@/hooks/useUploadImage';
-import Image from 'next/image';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Toast } from 'primereact/toast';
@@ -7,7 +6,7 @@ import { Tooltip } from 'primereact/tooltip';
 import { useRef, useState } from 'react';
 
 export function FileUploader(props) {
-  const { isEdit, defaultValue } = props;
+  const { isEdit, defaultValue, onUpload } = props;
   const [imageUrl, setImageUrl] = useState(defaultValue);
   const toast = useRef(null);
   const [totalSize, setTotalSize] = useState(0);
@@ -22,7 +21,7 @@ export function FileUploader(props) {
           { file },
           {
             onSuccess: res => {
-              console.log(res);
+              onUpload(res);
               setImageUrl(res);
             },
           }
@@ -41,7 +40,7 @@ export function FileUploader(props) {
   };
 
   const headerTemplate = options => {
-    const { className, chooseButton, uploadButton, cancelButton } = options;
+    const { className, chooseButton } = options;
     const value = totalSize / 10000;
     const formatedValue =
       fileUploadRef && fileUploadRef.current
@@ -80,13 +79,17 @@ export function FileUploader(props) {
               width: '100%',
             }}
           >
-            <Image
+            <img
               src={url}
               alt={'preview'}
               // role="presentation"
-              fill
               style={{
                 objectFit: 'contain',
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                left: 0,
+                top: 0,
               }}
             />
           </div>
@@ -151,7 +154,7 @@ export function FileUploader(props) {
       <FileUpload
         ref={fileUploadRef}
         name="uploader"
-        url="https://primefaces.org/primereact/showcase/upload.php"
+        // url="https://primefaces.org/primereact/showcase/upload.php"
         accept="image/*"
         maxFileSize={1000000}
         onSelect={onTemplateSelect}
@@ -160,11 +163,7 @@ export function FileUploader(props) {
         headerTemplate={headerTemplate}
         itemTemplate={() => itemTemplate(imageUrl)}
         emptyTemplate={props =>
-          imageUrl
-            ? itemTemplate(
-                'https://temporary.suaraproduction.com/media/01GRKS7W9Y2WCJKKWX3KJXNVSR.jpg'
-              )
-            : emptyTemplate({ ...props })
+          imageUrl ? itemTemplate(imageUrl) : emptyTemplate({ ...props })
         }
         chooseOptions={chooseOptions}
       />

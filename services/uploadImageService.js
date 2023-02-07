@@ -1,16 +1,21 @@
 // import { getSession } from 'next-auth/react';
+import { getFormData } from '@/utils/form';
 import apiCall from './_baseService';
 
 const uploadImageService = {
-  async upload(payload) {
-    let formData = new FormData();
-    formData.append('file', payload);
-    const data = await apiCall.post('/admin/upload', formData, {
+  async upload(data) {
+    const payload = data instanceof File ? { file: data } : data;
+    const formData = getFormData(payload);
+
+    const response = await apiCall.post('/admin/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return data;
+    if (response?.data) {
+      return `https://${response?.data}`;
+    }
+    return response;
   },
 };
 

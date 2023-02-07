@@ -15,6 +15,7 @@ export function HeroInput(props) {
         initialValues={{
           title: data?.title,
           content: data?.content?.body,
+          Image: data?.image,
         }}
         onSubmit={(values, actions) => {
           const payload = {
@@ -69,7 +70,13 @@ export function HeroInput(props) {
               </div>
             </div>
             <div className="field ">
-              <FileUploader isEdit={isEdit} defaultValue={data?.image} />
+              <FileUploader
+                isEdit={isEdit}
+                defaultValue={values?.image}
+                onUpload={e => {
+                  setFieldValue('image', e);
+                }}
+              />
             </div>
             <div className={isEdit ? 'field grid' : 'hidden'}>
               <div className="flex gap-3 px-2 justify-content-end w-full">

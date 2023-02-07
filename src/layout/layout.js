@@ -16,7 +16,7 @@ import Loader from '@/components/Loader';
 export default function Layout(props) {
   const router = useRouter();
   const session = useSession();
-  console.log(router.pathname);
+  // console.log(router.pathname);
   console.log(session);
 
   useEffect(() => {

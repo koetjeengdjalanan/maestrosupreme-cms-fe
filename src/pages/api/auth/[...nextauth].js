@@ -1,7 +1,9 @@
 import axios from 'axios';
-import NextAuth from 'next-auth/next';
+import NextAuth, { NextAuthOptions } from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import apiCall from 'services/_baseService';
+import { signOut } from 'next-auth/react';
+import { redirect } from 'next/dist/server/api-utils';
+import { publicService } from 'services/_baseService';
 
 const config = token => ({
   headers: {
@@ -12,39 +14,56 @@ const config = token => ({
 });
 
 async function refreshAccessToken(token) {
-  try {
-    // Get a new set of tokens with a refreshToken
-    const refreshedTokens = await apiCall.get(
-      '/auth/refresh_token',
-      config(token.accessToken)
-    );
+  // if (!token.accessToken) {
+  //   return {
+  //     ...token,
+  //     error: 'RefreshAccessUnavailable',
+  //   };
+  // }
 
-    if (!refreshedTokens) throw new Error('failed to refresh the token');
+  if (token.tokenExpired && Date.now() < token.tokenExpired) {
+    try {
+      const refreshedTokens = await publicService.get(
+        '/auth/refresh_token',
+        config(token.accessToken)
+      );
 
-    const newUser = await apiCall.get(
-      '/auth/profile',
-      config(refreshedTokens.data.access_token)
-    );
+      const newUser = await publicService.get(
+        '/auth/profile',
+        config(refreshedTokens.data.access_token)
+      );
+      console.log(newUser);
 
-    if (!newUser || 'error' in newUser)
-      throw new Error("there's something wrong when getting user profile");
+      return {
+        ...token,
+        accessToken: refreshedTokens?.data.access_token,
+        tokenExpired: refreshedTokens?.data?.expire_after * 1000,
+        tokenType: refreshedTokens?.data.token_type,
+        user: newUser.data,
+        error: null,
+      };
+    } catch (error) {
+      // console.log(error, 'error');
 
-    // console.log(newUser);
+      return {
+        ...token,
+        error: 'RefreshAccessTokenError',
+      };
+    }
+  }
 
+  if (token.tokenExpired && Date.now() >= token.tokenExpired) {
     return {
       ...token,
-      accessToken: refreshedTokens.data.access_token,
-      tokenExpired: (Date.now() + 2.9 * 60 * 10) * 1000,
-      tokenType: refreshedTokens.data.token_type,
-      user: newUser?.data,
-      error: null,
-    };
-  } catch (error) {
-    return {
-      ...token,
-      error: 'RefreshAccessTokenError',
+      error: 'RefreshAccessTokenExpired',
     };
   }
+
+  return {
+    ...token,
+    error: 'RefreshAccessUnavailable',
+  };
+  // return token;
 }
 
 export const authOptions = {
@@ -60,13 +79,12 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_API}/auth/login`;
-        const res = await axios.post(url, {
+        const res = await publicService.post(`/auth/login`, {
           email: credentials.email,
           password: credentials.password,
         });
-        if (res?.data?.data) {
-          return res?.data.data;
+        if (res?.data) {
+          return res?.data;
         } else {
           return null;
         }
@@ -81,32 +99,19 @@ export const authOptions = {
       return false;
     },
 
-    jwt: async ({ token, user }) => {
+    async jwt({ token, user }) {
       if (user) {
-        // This will only be executed at login. Each next invocation will skip this part.
         token.accessToken = user?.access_token;
-        token.accessTokenExpiry = (Date.now() + 2.9 * 60 * 10) * 1000;
+        token.tokenExpired = user?.expire_after * 1000;
       }
 
-      // If accessTokenExpiry is 24 hours, we have to refresh token before 24 hours pass.
-      const shouldRefreshTime = Math.round(
-        (Date.now() + 2.9 * 60 * 10) * 1000 - 60 * 60 * 1000 - Date.now()
-      );
-
-      // If the token is still valid, just return it.
-      if (shouldRefreshTime > 0) {
-        return Promise.resolve(token);
-      }
-
-      // If the call arrives after 23 hours have passed, we allow to refresh the token.
-      token = refreshAccessToken(token);
-      return Promise.resolve(token);
+      return refreshAccessToken(token);
     },
 
-    session: async ({ session, token }) => {
+    async session({ session, token }) {
       // Send properties to the client, like an access_token from a provider.
       // console.log(token, 'token');
-      return Promise.resolve({ ...session, ...token });
+      return { ...session, ...token };
     },
 
     async redirect({ url, baseUrl }) {
@@ -116,6 +121,15 @@ export const authOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+
+  jwt: {
+    secret: process.env.NEXTAUTH_SECRET ?? '',
+  },
+  session: {
+    strategy: 'jwt',
+    // Seconds - How long until an idle session expires and is no longer valid.
+    maxAge: Number(process.env.NEXT_PUBLIC_JWT_REFRESH_TTL || 0) * 60 * 10, // +-1 day
+  },
 
   pages: {
     signIn: '/login',

@@ -142,10 +142,10 @@ export function AdvantageInput(props) {
                         <FieldArray name="list">
                           {({ insert, remove, push }) => (
                             <div className="col-12 grid gap-4">
-                              {values.content?.list?.map(list => (
+                              {values.content?.list?.map((item, index) => (
                                 <div
                                   className="col-12 flex gap-4"
-                                  key={list?.id}
+                                  key={item?.id}
                                 >
                                   {values.content.type === 'list' && (
                                     <InputText
@@ -153,17 +153,18 @@ export function AdvantageInput(props) {
                                       placeholder="type here to add list item"
                                       onChange={e => {
                                         const { value } = e?.target;
-                                        const data = subContent.content.map(
-                                          subList => {
-                                            if (subList?.id === list?.id) {
-                                              return {
-                                                ...subList,
-                                                body: value,
-                                              };
-                                            }
-                                            return subList;
-                                          }
-                                        );
+                                        values.content?.list;
+                                        // const data = subContent.content.map(
+                                        //   subList => {
+                                        //     if (subList?.id === list?.id) {
+                                        //       return {
+                                        //         ...subList,
+                                        //         body: value,
+                                        //       };
+                                        //     }
+                                        //     return subList;
+                                        //   }
+                                        // );
 
                                         if (!list?.body) {
                                           setSubContent(prev => ({
