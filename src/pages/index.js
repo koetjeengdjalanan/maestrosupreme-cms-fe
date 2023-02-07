@@ -227,7 +227,7 @@ export default function Dashboard({ data }) {
 
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions);
-  const { data } = await apiCall.get('/admin', {
+  const res = await apiCall.get('/admin', {
     headers: {
       Authorization: `Bearer ${session?.accessToken || ''}`,
     },
@@ -237,6 +237,6 @@ export async function getServerSideProps(context) {
   // productService.getProductsSmall().then(data => console.log(data));
 
   return {
-    props: { data: data || '' }, // will be passed to the page component as props
+    props: { data: res?.data || '' }, // will be passed to the page component as props
   };
 }

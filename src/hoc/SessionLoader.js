@@ -7,16 +7,22 @@ const SessionLoader = ({ children }) => {
   const router = useRouter();
   const session = useSession();
 
+  // console.log(session);
+
   if (session.status === 'loading') {
     return <Loader className="h-100vh" />;
   }
 
-  if (session.status === 'authenticated') {
+  if (session?.data?.accessToken) {
     setToken(session?.data?.accessToken);
   }
 
-  if (router.pathname === '/auth/login' && session.status === 'authenticated') {
+  if (router.pathname === '/login' && session.status === 'authenticated') {
     router.push('/');
+  }
+
+  if (!router.pathname === '/login' && session.status === 'unauthenticated') {
+    router.push('/login');
   }
 
   return <>{children}</>;

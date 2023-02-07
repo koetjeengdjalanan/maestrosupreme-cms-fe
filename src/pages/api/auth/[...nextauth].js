@@ -1,8 +1,6 @@
 import axios from 'axios';
-import NextAuth, { NextAuthOptions } from 'next-auth/next';
+import NextAuth from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { signOut } from 'next-auth/react';
-import { redirect } from 'next/dist/server/api-utils';
 import apiCall from 'services/_baseService';
 
 const config = token => ({
@@ -14,56 +12,39 @@ const config = token => ({
 });
 
 async function refreshAccessToken(token) {
-  // if (!token.accessToken) {
-  //   return {
-  //     ...token,
-  //     error: 'RefreshAccessUnavailable',
-  //   };
-  // }
+  try {
+    // Get a new set of tokens with a refreshToken
+    const refreshedTokens = await apiCall.get(
+      '/auth/refresh_token',
+      config(token.accessToken)
+    );
 
-  if (token.tokenExpired && Date.now() < token.tokenExpired) {
-    try {
-      const refreshedTokens = await apiCall.get(
-        '/auth/refresh_token',
-        config(token.accessToken)
-      );
+    if (!refreshedTokens) throw new Error('failed to refresh the token');
 
-      const newUser = await apiCall.get(
-        '/auth/profile',
-        config(refreshedTokens.data.access_token)
-      );
-      console.log(newUser);
+    const newUser = await apiCall.get(
+      '/auth/profile',
+      config(refreshedTokens.data.access_token)
+    );
 
-      return {
-        ...token,
-        accessToken: refreshedTokens.data.access_token,
-        tokenExpired: (Date.now() + 2 * 60 * 10) * 1000,
-        tokenType: refreshedTokens.data.token_type,
-        user: newUser.data,
-        error: null,
-      };
-    } catch (error) {
-      // console.log(error, 'error');
+    if (!newUser || 'error' in newUser)
+      throw new Error("there's something wrong when getting user profile");
 
-      return {
-        ...token,
-        error: 'RefreshAccessTokenError',
-      };
-    }
-  }
+    // console.log(newUser);
 
-  if (token.tokenExpired && Date.now() >= token.tokenExpired) {
     return {
       ...token,
-      error: 'RefreshAccessTokenExpired',
+      accessToken: refreshedTokens.data.access_token,
+      tokenExpired: (Date.now() + 2.9 * 60 * 10) * 1000,
+      tokenType: refreshedTokens.data.token_type,
+      user: newUser?.data,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
     };
   }
-
-  return {
-    ...token,
-    error: 'RefreshAccessUnavailable',
-  };
-  // return token;
 }
 
 export const authOptions = {
@@ -100,27 +81,32 @@ export const authOptions = {
       return false;
     },
 
-    async jwt({ token, user }) {
+    jwt: async ({ token, user }) => {
       if (user) {
-        const newUser = await apiCall.get(
-          '/auth/profile',
-          config(user.access_token)
-        );
-        return {
-          ...token,
-          accessToken: user?.access_token,
-          tokenExpired: (Date.now() + 2 * 60 * 10) * 1000,
-          user: newUser?.data,
-        };
+        // This will only be executed at login. Each next invocation will skip this part.
+        token.accessToken = user?.access_token;
+        token.accessTokenExpiry = (Date.now() + 2.9 * 60 * 10) * 1000;
       }
 
-      return token;
+      // If accessTokenExpiry is 24 hours, we have to refresh token before 24 hours pass.
+      const shouldRefreshTime = Math.round(
+        (Date.now() + 2.9 * 60 * 10) * 1000 - 60 * 60 * 1000 - Date.now()
+      );
+
+      // If the token is still valid, just return it.
+      if (shouldRefreshTime > 0) {
+        return Promise.resolve(token);
+      }
+
+      // If the call arrives after 23 hours have passed, we allow to refresh the token.
+      token = refreshAccessToken(token);
+      return Promise.resolve(token);
     },
 
-    async session({ session, token }) {
+    session: async ({ session, token }) => {
       // Send properties to the client, like an access_token from a provider.
       // console.log(token, 'token');
-      return { ...session, ...token };
+      return Promise.resolve({ ...session, ...token });
     },
 
     async redirect({ url, baseUrl }) {
@@ -130,15 +116,6 @@ export const authOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-
-  jwt: {
-    secret: process.env.NEXTAUTH_SECRET ?? '',
-  },
-  session: {
-    strategy: 'jwt',
-    // Seconds - How long until an idle session expires and is no longer valid.
-    maxAge: Number(process.env.NEXT_PUBLIC_JWT_REFRESH_TTL || 0) * 60 * 10, // +-1 day
-  },
 
   pages: {
     signIn: '/login',

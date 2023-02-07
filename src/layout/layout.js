@@ -11,6 +11,7 @@ import AppFooter from './AppFooter';
 import AppSidebar from './AppSidebar';
 import AppTopbar from './AppTopbar';
 import { LayoutContext } from './context/layoutcontext';
+import Loader from '@/components/Loader';
 
 export default function Layout(props) {
   const router = useRouter();
@@ -167,8 +168,8 @@ export default function Layout(props) {
     'p-ripple-disabled': !layoutConfig.ripple,
   });
 
-  if (status === 'loading') {
-    return <p>Loading...</p>;
+  if (session.status === 'loading') {
+    return <Loader />;
   }
 
   return (
