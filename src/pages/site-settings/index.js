@@ -9,7 +9,7 @@ import { useMainContent, useUpdateMainContent } from '@/hooks/mainContent';
 import { Accordion, AccordionTab } from 'primereact/accordion';
 
 function SiteSettings() {
-  const { data, isLoading } = useMainContent();
+  const { data, isLoading, refetch } = useMainContent();
   const { mutateAsync: updateContent, isLoading: updating } =
     useUpdateMainContent();
 
@@ -17,6 +17,7 @@ function SiteSettings() {
     try {
       updateContent(newContent, {
         onSuccess: () => {
+          refetch();
           onSuccess && onSuccess();
         },
       });
@@ -35,10 +36,18 @@ function SiteSettings() {
         <HeroInput data={data?.['1']} sectionId="1" onUpdate={handleUpdate} />
       </AccordionTab>
       <AccordionTab header="Advantage-1">
-        <AdvantageInput data={data?.['2']} onUpdate={handleUpdate} />
+        <AdvantageInput
+          data={data?.['2']}
+          sectionId="2"
+          onUpdate={handleUpdate}
+        />
       </AccordionTab>
       <AccordionTab header="Advantage-2x">
-        <AdvantageInput data={data?.['3']} onUpdate={handleUpdate} />
+        <AdvantageInput
+          data={data?.['3']}
+          sectionId="3"
+          onUpdate={handleUpdate}
+        />
       </AccordionTab>
       <AccordionTab header="Offers">
         <OfferingInput data={data} onUpdate={handleUpdate} />

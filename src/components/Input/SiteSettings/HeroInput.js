@@ -9,8 +9,6 @@ export function HeroInput(props) {
   const { data, onUpdate, sectionId } = props;
   const [isEdit, setIsEdit] = useState(false);
 
-  console.log(data);
-
   return (
     <div className="p-3">
       <Formik
