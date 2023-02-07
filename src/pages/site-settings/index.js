@@ -35,10 +35,10 @@ function SiteSettings() {
         <HeroInput data={data?.['1']} sectionId="1" onUpdate={handleUpdate} />
       </AccordionTab>
       <AccordionTab header="Advantage-1">
-        <AdvantageInput data={data} onUpdate={handleUpdate} />
+        <AdvantageInput data={data?.['2']} onUpdate={handleUpdate} />
       </AccordionTab>
       <AccordionTab header="Advantage-2x">
-        <AdvantageInput data={data} onUpdate={handleUpdate} />
+        <AdvantageInput data={data?.['3']} onUpdate={handleUpdate} />
       </AccordionTab>
       <AccordionTab header="Offers">
         <OfferingInput data={data} onUpdate={handleUpdate} />

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
+  reactStrictMode: true,
   trailingSlash: true,
   // basePath: process.env.NODE_ENV === 'production' ? '/sakai-react' : '',
   publicRuntimeConfig: {
@@ -9,6 +9,9 @@ const nextConfig = {
     //   uploadPath:
     //       process.env.NODE_ENV === 'production' ? '/sakai-react/upload.php' : '/api/upload',
     uploadPath: '/api/upload',
+  },
+  images: {
+    domains: ['temporary.suaraproduction.com', 'source.unsplash.com'],
   },
 };
 

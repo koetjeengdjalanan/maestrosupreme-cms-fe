@@ -13,30 +13,37 @@ const config = token => ({
   },
 });
 
-const getUserDetail = async token => {
-  const user = await apiCall.get('/auth/profile', config(token));
-  return user;
-};
-
 async function refreshAccessToken(token) {
+  // if (!token.accessToken) {
+  //   return {
+  //     ...token,
+  //     error: 'RefreshAccessUnavailable',
+  //   };
+  // }
+
   if (token.tokenExpired && Date.now() < token.tokenExpired) {
     try {
       const refreshedTokens = await apiCall.get(
         '/auth/refresh_token',
-        config(token?.accessToken)
+        config(token.accessToken)
       );
 
-      const newUser = await getUserDetail(refreshedTokens?.data?.access_token);
+      const newUser = await apiCall.get(
+        '/auth/profile',
+        config(refreshedTokens.data.access_token)
+      );
+      console.log(newUser);
+
       return {
         ...token,
-        accessToken: refreshedTokens?.data?.access_token,
+        accessToken: refreshedTokens.data.access_token,
         tokenExpired: (Date.now() + 2 * 60 * 10) * 1000,
-        tokenType: refreshedTokens?.data?.token_type,
-        user: newUser?.data,
+        tokenType: refreshedTokens.data.token_type,
+        user: newUser.data,
         error: null,
       };
     } catch (error) {
-      console.log(error, 'error');
+      // console.log(error, 'error');
 
       return {
         ...token,
@@ -51,10 +58,12 @@ async function refreshAccessToken(token) {
       error: 'RefreshAccessTokenExpired',
     };
   }
+
   return {
     ...token,
     error: 'RefreshAccessUnavailable',
   };
+  // return token;
 }
 
 export const authOptions = {
@@ -71,12 +80,12 @@ export const authOptions = {
       },
       async authorize(credentials) {
         const url = `${process.env.NEXT_PUBLIC_BACKEND_API}/auth/login`;
-        const { data } = await axios.post(url, {
+        const res = await axios.post(url, {
           email: credentials.email,
           password: credentials.password,
         });
-        if (data?.data) {
-          return data.data;
+        if (res?.data?.data) {
+          return res?.data.data;
         } else {
           return null;
         }
@@ -93,11 +102,19 @@ export const authOptions = {
 
     async jwt({ token, user }) {
       if (user) {
-        token.accessToken = user.access_token;
-        token.tokenExpired = (Date.now() + 2 * 60 * 10) * 1000;
+        const newUser = await apiCall.get(
+          '/auth/profile',
+          config(user.access_token)
+        );
+        return {
+          ...token,
+          accessToken: user?.access_token,
+          tokenExpired: (Date.now() + 2 * 60 * 10) * 1000,
+          user: newUser?.data,
+        };
       }
 
-      return refreshAccessToken(token);
+      return token;
     },
 
     async session({ session, token }) {
@@ -112,7 +129,16 @@ export const authOptions = {
       return baseUrl;
     },
   },
-  // secret: process.env.JWT_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
+
+  jwt: {
+    secret: process.env.NEXTAUTH_SECRET ?? '',
+  },
+  session: {
+    strategy: 'jwt',
+    // Seconds - How long until an idle session expires and is no longer valid.
+    maxAge: Number(process.env.NEXT_PUBLIC_JWT_REFRESH_TTL || 0) * 60 * 10, // +-1 day
+  },
 
   pages: {
     signIn: '/login',
@@ -121,7 +147,7 @@ export const authOptions = {
     verifyRequest: '/', // (used for check email message)
     newUser: '/', // New users will be directed here on first sign in (leave the property out if not of interest)
   },
-  debug: process.env.NODE_ENV === 'development',
+  // debug: process.env.NODE_ENV === 'development',
 };
 
 export default async function auth(req, res) {

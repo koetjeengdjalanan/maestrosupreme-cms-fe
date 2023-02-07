@@ -1,35 +1,40 @@
-import getConfig from 'next/config';
+import dayjs from 'dayjs';
+import { getServerSession } from 'next-auth';
 import { Button } from 'primereact/button';
 import { Chart } from 'primereact/chart';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
-import { Menu } from 'primereact/menu';
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ProductService } from '../../demo/service/ProductService';
-import { LayoutContext } from '../layout/context/layoutcontext';
-import Image from 'next/image';
+import { useMemo, useState } from 'react';
 import apiCall from 'services/_baseService';
-import dayjs from 'dayjs';
-export default function Dashboard() {
-  const [products, setProducts] = useState(null);
-  const menu1 = useRef(null);
-  const menu2 = useRef(null);
-  const { layoutConfig } = useContext(LayoutContext);
-  const contextPath = getConfig().publicRuntimeConfig.contextPath;
-  const [dashData, setDashData] = useState(null);
-  const [chartData, setChartData] = useState({});
-  const [chartOptions, setChartOptions] = useState({});
+import { authOptions } from './api/auth/[...nextauth]';
 
-  useEffect(() => {
+const chartOptions = {
+  cutout: '60%',
+  borderColor: '#071426',
+  borderWidth: 5,
+  hoverOffset: 25,
+};
+
+export default function Dashboard({ data }) {
+  const [products, setProducts] = useState(null);
+  // const menu1 = useRef(null);
+  // const menu2 = useRef(null);
+  // const { layoutConfig } = useContext(LayoutContext);
+  // const contextPath = getConfig().publicRuntimeConfig.contextPath;
+  // const [chartData, setChartData] = useState({});
+  // const [chartOptions, setChartOptions] = useState({});
+
+  const chartData = useMemo(() => {
     const documentStyle = getComputedStyle(document.documentElement);
-    const data = {
+
+    return {
       labels: ['blog', 'bounce', 'Subscribed'],
       datasets: [
         {
           data: [
-            dashData?.visits?.general ?? 300,
-            dashData?.visits?.bounce ?? 50,
-            dashData?.subscriber?.count ?? 100,
+            data?.visits?.general ?? 300,
+            data?.visits?.bounce ?? 50,
+            data?.subscriber?.count ?? 100,
           ],
           backgroundColor: [
             documentStyle.getPropertyValue('--blue-500'),
@@ -44,34 +49,7 @@ export default function Dashboard() {
         },
       ],
     };
-    const options = {
-      cutout: '60%',
-      borderColor: '#071426',
-      borderWidth: 5,
-      hoverOffset: 25,
-    };
-
-    setChartData(data);
-    setChartOptions(options);
-  }, [
-    dashData?.subscriber?.count,
-    dashData?.visits?.bounce,
-    dashData?.visits?.general,
-  ]);
-
-  useEffect(() => {
-    apiCall
-      .get('/admin')
-      .then(res => {
-        setDashData(res.data);
-      })
-      .catch(e => console.log(e));
-  }, []);
-
-  useEffect(() => {
-    const productService = new ProductService();
-    productService.getProductsSmall().then(data => setProducts(data));
-  }, []);
+  }, [data]);
 
   const dateTimeFormat = rowData => {
     return dayjs(rowData.created_at * 1).format('ddd, MMM D, YY h:mm A');
@@ -85,7 +63,7 @@ export default function Dashboard() {
             <div>
               <span className="block text-500 font-medium mb-3">Last Post</span>
               <div className="text-900 font-medium text-xl">
-                {dashData?.post_last?.touch} day(s)
+                {data?.post_last?.touch} day(s)
               </div>
             </div>
             <div
@@ -97,12 +75,12 @@ export default function Dashboard() {
           </div>
           <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
             <span className="text-green-500 font-medium">
-              {dashData?.post_last?.post?.author?.name}
+              {data?.post_last?.post?.author?.name}
             </span>
           </div>
           <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
             <span className="text-500 over">
-              {dashData?.post_last?.post?.title}
+              {data?.post_last?.post?.title}
             </span>
           </div>
         </div>
@@ -115,7 +93,7 @@ export default function Dashboard() {
                 Draft Post
               </span>
               <div className="text-900 font-medium text-xl">
-                {dashData?.post_last?.draft}
+                {data?.post_last?.draft}
               </div>
             </div>
             <div
@@ -130,7 +108,7 @@ export default function Dashboard() {
           </span>
           <br />
           <span className="text-500">
-            {dashData?.post_last?.oldest?.updated_at}
+            {data?.post_last?.oldest?.updated_at}
           </span>
         </div>
       </div>
@@ -142,7 +120,7 @@ export default function Dashboard() {
                 Web Visitor
               </span>
               <div className="text-900 font-medium text-xl">
-                {dashData?.visits?.total}
+                {data?.visits?.total}
               </div>
             </div>
             <div
@@ -159,10 +137,10 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-column">
               <span className="text-green-500 font-medium">
-                {dashData?.visits?.general}
+                {data?.visits?.general}
               </span>
               <span className="text-green-500 font-medium">
-                {dashData?.visits?.blog}
+                {data?.visits?.blog}
               </span>
             </div>
           </div>
@@ -176,7 +154,7 @@ export default function Dashboard() {
                 Mail Subscriber
               </span>
               <div className="text-900 font-medium text-xl">
-                {dashData?.subscriber?.count}
+                {data?.subscriber?.count}
               </div>
             </div>
             <div
@@ -188,12 +166,12 @@ export default function Dashboard() {
           </div>
           <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
             <span className="text-green-500 font-medium">
-              {dashData?.post_last?.post?.author?.name}
+              {data?.post_last?.post?.author?.name}
             </span>
           </div>
           <div className="white-space-nowrap overflow-hidden text-overflow-ellipsis">
             <span className="text-500 over">
-              {dashData?.post_last?.post?.title}
+              {data?.post_last?.post?.title}
             </span>
           </div>
         </div>
@@ -202,7 +180,7 @@ export default function Dashboard() {
         <div className="card">
           <h5>Most Recent Subscription</h5>
           <DataTable
-            value={dashData?.subscriber?.list}
+            value={data?.subscriber?.list}
             rows={5}
             paginator
             resizableColumns
@@ -245,4 +223,20 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+export async function getServerSideProps(context) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+  const { data } = await apiCall.get('/admin', {
+    headers: {
+      Authorization: `Bearer ${session?.accessToken || ''}`,
+    },
+  });
+
+  // const productService = new ProductService();
+  // productService.getProductsSmall().then(data => console.log(data));
+
+  return {
+    props: { data: data || '' }, // will be passed to the page component as props
+  };
 }

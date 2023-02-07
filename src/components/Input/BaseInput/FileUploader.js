@@ -1,50 +1,43 @@
-import React, { useRef, useState } from 'react';
-import { Toast } from 'primereact/toast';
+import { useUploadImage } from '@/hooks/useUploadImage';
+import Image from 'next/image';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
-import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
 import { Tooltip } from 'primereact/tooltip';
-import { Tag } from 'primereact/tag';
-import Image from 'next/image';
+import { useRef, useState } from 'react';
 
-export function FileUploader() {
+export function FileUploader(props) {
+  const { isEdit, defaultValue } = props;
+  const [imageUrl, setImageUrl] = useState(defaultValue);
   const toast = useRef(null);
   const [totalSize, setTotalSize] = useState(0);
   const fileUploadRef = useRef(null);
+  const { mutateAsync: upload } = useUploadImage();
 
   const onTemplateSelect = e => {
-    let _totalSize = totalSize;
-    let files = e.files;
+    const file = e.files[0];
+    if (file) {
+      try {
+        upload(
+          { file },
+          {
+            onSuccess: res => {
+              console.log(res);
+              setImageUrl(res);
+            },
+          }
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    }
 
-    Object.keys(files).forEach(key => {
-      _totalSize += files[key].size || 0;
-    });
-
-    setTotalSize(_totalSize);
-  };
-
-  const onTemplateUpload = e => {
-    let _totalSize = 0;
-
-    e.files.forEach(file => {
-      _totalSize += file.size || 0;
-    });
-
-    setTotalSize(_totalSize);
-    toast.current.show({
-      severity: 'info',
-      summary: 'Success',
-      detail: 'File Uploaded',
-    });
-  };
-
-  const onTemplateRemove = (file, callback) => {
-    setTotalSize(totalSize - file.size);
-    callback();
+    // setTotalSize(_totalSize);
   };
 
   const onTemplateClear = () => {
     setTotalSize(0);
+    setImageUrl('');
   };
 
   const headerTemplate = options => {
@@ -65,8 +58,8 @@ export function FileUploader() {
         }}
       >
         {chooseButton}
-        {uploadButton}
-        {cancelButton}
+        {/* {uploadButton} */}
+        {/* {cancelButton} */}
         <ProgressBar
           value={value}
           displayValueTemplate={() => `${formatedValue} / 1 MB`}
@@ -76,40 +69,29 @@ export function FileUploader() {
     );
   };
 
-  const itemTemplate = (file, props) => {
+  const itemTemplate = url => {
     return (
-      <div className="flex align-items-center flex-wrap">
-        <div
-          className="relative flex align-items-center"
-          style={{ width: '40%' }}
-        >
-          <div className="relative">
+      <div className="flex align-items-center flex-wrap h-full">
+        <div className="relative flex align-items-center flex-column w-full gap-3">
+          <div
+            className="relative mx-auto"
+            style={{
+              minHeight: 400,
+              width: '100%',
+            }}
+          >
             <Image
-              alt={file.name}
-              role="presentation"
-              src={file.objectURL}
+              src={url}
+              alt={'preview'}
+              // role="presentation"
               fill
               style={{
                 objectFit: 'contain',
               }}
             />
           </div>
-          <span className="flex flex-column text-left ml-3">
-            {file.name}
-            <small>{new Date().toLocaleDateString()}</small>
-          </span>
+          {/* <span className="flex flex-column text-left ml-3">{file.name}</span> */}
         </div>
-        <Tag
-          value={props.formatSize}
-          severity="warning"
-          className="px-3 py-2"
-        />
-        <Button
-          type="button"
-          icon="pi pi-times"
-          className="p-button-outlined p-button-rounded p-button-danger ml-auto"
-          onClick={() => onTemplateRemove(file, props.onRemove)}
-        />
       </div>
     );
   };
@@ -154,6 +136,10 @@ export function FileUploader() {
       'custom-cancel-btn p-button-danger p-button-rounded p-button-outlined',
   };
 
+  if (!isEdit && imageUrl) {
+    return itemTemplate(imageUrl);
+  }
+
   return (
     <div>
       <Toast ref={toast}></Toast>
@@ -164,21 +150,23 @@ export function FileUploader() {
 
       <FileUpload
         ref={fileUploadRef}
-        name="demo[]"
+        name="uploader"
         url="https://primefaces.org/primereact/showcase/upload.php"
-        // multiple
         accept="image/*"
         maxFileSize={1000000}
-        onUpload={onTemplateUpload}
         onSelect={onTemplateSelect}
         onError={onTemplateClear}
         onClear={onTemplateClear}
         headerTemplate={headerTemplate}
-        itemTemplate={itemTemplate}
-        emptyTemplate={emptyTemplate}
+        itemTemplate={() => itemTemplate(imageUrl)}
+        emptyTemplate={props =>
+          imageUrl
+            ? itemTemplate(
+                'https://temporary.suaraproduction.com/media/01GRKS7W9Y2WCJKKWX3KJXNVSR.jpg'
+              )
+            : emptyTemplate({ ...props })
+        }
         chooseOptions={chooseOptions}
-        uploadOptions={uploadOptions}
-        cancelOptions={cancelOptions}
       />
     </div>
   );

@@ -69,7 +69,7 @@ export function HeroInput(props) {
               </div>
             </div>
             <div className="field ">
-              <FileUploader />
+              <FileUploader isEdit={isEdit} defaultValue={data?.image} />
             </div>
             <div className={isEdit ? 'field grid' : 'hidden'}>
               <div className="flex gap-3 px-2 justify-content-end w-full">
