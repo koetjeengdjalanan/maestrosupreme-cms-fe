@@ -52,14 +52,14 @@ const PostsTable = () => {
         'proposal',
     ];
     const customerService = new CustomerService();
-    const productService = new ProductService();
+    // const productService = new ProductService();
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [totalRecords, setTotalRecords] = useState(0);
     const [postList, setPostList] = useState(null);
     const [selectAll, setSelectAll] = useState(false);
     const [selectedPostList, setSelectedPostList] = useState(null);
-    const [selectedRepresentative, setSelectedRepresentative] = useState(null);
+    // const [selectedRepresentative, setSelectedRepresentative] = useState(null);
     const [lazyParams, setLazyParams] = useState({
         first: 0,
         rows: 10,
@@ -74,9 +74,9 @@ const PostsTable = () => {
         },
     });
 
-    const { data: blogList } = usePaginatedBlog();
-
-    console.log(blogList);
+    const { data: blogList, isFetching } = usePaginatedBlog({
+        params: {},
+    });
 
     let loadLazyTimeout = null;
 
@@ -92,15 +92,15 @@ const PostsTable = () => {
         }
 
         //imitate delay of a backend call
-        loadLazyTimeout = setTimeout(() => {
-            // customerService.getCustomersMedium({ lazyEvent: JSON.stringify(lazyParams) })
-            apiCall.get(`/admin/post/list?page=${currentPage}`).then(data => {
-                setCurrentPage(data?.data?.current_page ?? 1);
-                setTotalRecords(data?.data?.total ?? 0);
-                setPostList(data?.data?.items ?? null);
-                setLoading(false);
-            });
-        }, Math.random() * 1000 + 250);
+        // loadLazyTimeout = setTimeout(() => {
+        //     // customerService.getCustomersMedium({ lazyEvent: JSON.stringify(lazyParams) })
+        //     apiCall.get(`/admin/post/list?page=${currentPage}`).then(data => {
+        //         setCurrentPage(data?.data?.current_page ?? 1);
+        //         setTotalRecords(data?.data?.total ?? 0);
+        //         setPostList(data?.data?.items ?? null);
+        //         setLoading(false);
+        //     });
+        // }, Math.random() * 1000 + 250);
     };
 
     const onSort = event => {
@@ -316,15 +316,15 @@ const PostsTable = () => {
                         </div>
                     </div>
                     <DataTable
-                        value={postList}
+                        value={blogList?.pages[0]?.items}
                         lazy
                         filterDisplay="row"
                         responsiveLayout="scroll"
                         dataKey="id"
                         paginator
-                        first={lazyParams.first}
+                        first={1}
                         rows={10}
-                        totalRecords={totalRecords}
+                        totalRecords={blogList?.pages[0]?.total}
                         // onPage={currentPage}
                         onPage={e => console.log(e)}
                         onSort={onSort}
@@ -332,7 +332,7 @@ const PostsTable = () => {
                         sortOrder={lazyParams.sortOrder}
                         onFilter={onFilter}
                         filters={lazyParams.filters}
-                        loading={loading}
+                        loading={isFetching}
                         selection={selectedPostList}
                         onSelectionChange={onSelectionChange}
                         selectAll={selectAll}

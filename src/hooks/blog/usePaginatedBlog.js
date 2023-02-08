@@ -5,7 +5,7 @@ export const usePaginatedBlog = ({ params = {}, options = {} }) => {
     //   const queryClient = useQueryClient();
     return useInfiniteQuery({
         queryKey: ['paginated-query', params],
-        queryFn: ({ pageParam = 1 }) => fetchPage(pageParam),
+        queryFn: ({ pageParam }) => blogService.getAll(pageParam ?? params),
         ...options,
     });
 };
