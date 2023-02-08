@@ -7,7 +7,6 @@ import { DataTable } from 'primereact/datatable';
 import { useMemo, useState } from 'react';
 import apiCall from 'services/_baseService';
 import { authOptions } from './api/auth/[...nextauth]';
-import { useSession } from 'next-auth/react';
 
 const chartOptions = {
     cutout: '60%',
