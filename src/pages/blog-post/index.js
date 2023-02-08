@@ -13,6 +13,7 @@ import { useFormik } from 'formik';
 import { ToggleButton } from 'primereact/togglebutton';
 import { Chips } from 'primereact/chips';
 import apiCall from 'services/_baseService';
+import { usePaginatedBlog } from '@/hooks/blog';
 
 const PostsTable = () => {
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
@@ -72,6 +73,10 @@ const PostsTable = () => {
             'representative.name': { value: '', matchMode: 'contains' },
         },
     });
+
+    const { data: blogList } = usePaginatedBlog();
+
+    console.log(blogList);
 
     let loadLazyTimeout = null;
 
@@ -320,7 +325,8 @@ const PostsTable = () => {
                         first={lazyParams.first}
                         rows={10}
                         totalRecords={totalRecords}
-                        onPage={currentPage}
+                        // onPage={currentPage}
+                        onPage={e => console.log(e)}
                         onSort={onSort}
                         sortField={lazyParams.sortField}
                         sortOrder={lazyParams.sortOrder}
