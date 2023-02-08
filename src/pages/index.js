@@ -7,6 +7,7 @@ import { DataTable } from 'primereact/datatable';
 import { useMemo, useState } from 'react';
 import apiCall from 'services/_baseService';
 import { authOptions } from './api/auth/[...nextauth]';
+import { useSession } from 'next-auth/react';
 
 const chartOptions = {
   cutout: '60%',
@@ -17,12 +18,6 @@ const chartOptions = {
 
 export default function Dashboard({ data }) {
   const [products, setProducts] = useState(null);
-  // const menu1 = useRef(null);
-  // const menu2 = useRef(null);
-  // const { layoutConfig } = useContext(LayoutContext);
-  // const contextPath = getConfig().publicRuntimeConfig.contextPath;
-  // const [chartData, setChartData] = useState({});
-  // const [chartOptions, setChartOptions] = useState({});
 
   const chartData = useMemo(() => {
     const documentStyle = getComputedStyle(document.documentElement);

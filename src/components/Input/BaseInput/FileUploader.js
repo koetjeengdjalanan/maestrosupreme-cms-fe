@@ -5,6 +5,8 @@ import { Toast } from 'primereact/toast';
 import { Tooltip } from 'primereact/tooltip';
 import { useRef, useState } from 'react';
 
+const FILE_SIZE = 2048000;
+
 export function FileUploader(props) {
   const { isEdit, defaultValue, onUpload } = props;
   const [imageUrl, setImageUrl] = useState(defaultValue);
@@ -15,14 +17,16 @@ export function FileUploader(props) {
 
   const onTemplateSelect = e => {
     const file = e.files[0];
-    if (file) {
+    if (file && file.size <= FILE_SIZE) {
       try {
         upload(
           { file },
           {
             onSuccess: res => {
-              onUpload(res);
-              setImageUrl(res);
+              if (res) {
+                onUpload(res);
+                setImageUrl(res);
+              }
             },
           }
         );
@@ -156,7 +160,7 @@ export function FileUploader(props) {
         name="uploader"
         // url="https://primefaces.org/primereact/showcase/upload.php"
         accept="image/*"
-        maxFileSize={1000000}
+        maxFileSize={FILE_SIZE}
         onSelect={onTemplateSelect}
         onError={onTemplateClear}
         onClear={onTemplateClear}
