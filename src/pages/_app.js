@@ -11,26 +11,30 @@ import '../styles/demo/Demos.scss';
 import '../styles/layout/layout.scss';
 import { authOptions } from './api/auth/[...nextauth]';
 import SessionLoader from '@/hoc/SessionLoader';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 export default function MyApp({
-  Component,
-  pageProps: { session, ...pageProps },
+    Component,
+    pageProps: { session, ...pageProps },
 }) {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <LayoutProvider>
-        <SessionProvider session={session}>
-          <SessionLoader>
-            {Component.getLayout ? (
-              Component.getLayout(<Component {...pageProps} />)
-            ) : (
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
+    return (
+        <QueryClientProvider client={queryClient}>
+            <LayoutProvider>
+                <SessionProvider session={session}>
+                    <SessionLoader>
+                        {Component.getLayout ? (
+                            Component.getLayout(<Component {...pageProps} />)
+                        ) : (
+                            <Layout>
+                                <Component {...pageProps} />
+                            </Layout>
+                        )}
+                    </SessionLoader>
+                </SessionProvider>
+            </LayoutProvider>
+            {process.env.NODE_ENV === 'development' && (
+                <ReactQueryDevtools initialIsOpen={false} />
             )}
-          </SessionLoader>
-        </SessionProvider>
-      </LayoutProvider>
-    </QueryClientProvider>
-  );
+        </QueryClientProvider>
+    );
 }
