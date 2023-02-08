@@ -33,19 +33,29 @@ export function AdvantageInput(props) {
             image: data?.image,
           }}
           onSubmit={(values, actions) => {
-            const payload = {
-              ...data,
-              ...values,
-              section: sectionId,
-              content: JSON.stringify(values?.content),
-            };
-            onUpdate(payload, {
-              onSuccess: () => {
-                actions.setSubmitting(false);
-                setIsEdit(false);
-              },
-            });
-          }}
+                        const list = values?.content?.list?.filter(
+                            val => !!val
+                        );
+
+                        const content = {
+                            ...values?.content,
+                            list,
+                        };
+
+                        const payload = {
+                            ...data,
+                            ...values,
+                            section: sectionId,
+                            content: JSON.stringify(content),
+                        };
+
+                        onUpdate(payload, {
+                            onSuccess: () => {
+                                actions.setSubmitting(false);
+                                setIsEdit(false);
+                            },
+                        });
+                    }}
         >
           {({
             handleSubmit,
