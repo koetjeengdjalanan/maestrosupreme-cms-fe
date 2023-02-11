@@ -17,7 +17,7 @@ export default function Layout(props) {
     const router = useRouter();
     const session = useSession();
     // console.log(router.pathname);
-    console.log(session);
+    // console.log(session);
 
     useEffect(() => {
         if (session?.data?.error) {

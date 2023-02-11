@@ -1,180 +1,165 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FilterMatchMode, FilterOperator } from 'primereact/api';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
-import { CustomerService } from '../../../demo/service/CustomerService';
-import { ProductService } from '../../../demo/service/ProductService';
-import getConfig from 'next/config';
+import { Column } from 'primereact/column';
+import { DataTable } from 'primereact/datatable';
 import { InputText } from 'primereact/inputtext';
 import { Sidebar } from 'primereact/sidebar';
+import { useEffect, useMemo, useState } from 'react';
 // import RichTextEditor from '@/components/RichTextEditor';
-import { useFormik } from 'formik';
-import { ToggleButton } from 'primereact/togglebutton';
-import { Chips } from 'primereact/chips';
-import apiCall from 'services/_baseService';
 import { usePaginatedBlog } from '@/hooks/blog';
+import { useFormik } from 'formik';
+import { Chips } from 'primereact/chips';
+import { ToggleButton } from 'primereact/togglebutton';
+import { combineKeys } from '@/utils/convertParamsObject';
+import { FilterMatchMode, FilterOperator } from 'primereact/api';
 
-const PostsTable = () => {
-    const contextPath = getConfig().publicRuntimeConfig.contextPath;
+const ROWS = 10;
 
-    const [customFirst1, setCustomFirst1] = useState(0);
-    const [customers1, setCustomers1] = useState(null);
-    const [customers2, setCustomers2] = useState([]);
-    const [customers3, setCustomers3] = useState([]);
-    const [filters1, setFilters1] = useState(null);
-    const [loading1, setLoading1] = useState(true);
-    const [loading2, setLoading2] = useState(true);
-    const [idFrozen, setIdFrozen] = useState(false);
-    const [products, setProducts] = useState([]);
-    const [globalFilterValue1, setGlobalFilterValue1] = useState('');
-    const [visibleBottom, setVisibleBottom] = useState(false);
-
-    const representatives = [
-        { name: 'Amy Elsner', image: 'amyelsner.png' },
-        { name: 'Anna Fali', image: 'annafali.png' },
-        { name: 'Asiya Javayant', image: 'asiyajavayant.png' },
-        { name: 'Bernardo Dominic', image: 'bernardodominic.png' },
-        { name: 'Elwin Sharvill', image: 'elwinsharvill.png' },
-        { name: 'Ioni Bowcher', image: 'ionibowcher.png' },
-        { name: 'Ivan Magalhaes', image: 'ivanmagalhaes.png' },
-        { name: 'Onyama Limba', image: 'onyamalimba.png' },
-        { name: 'Stephen Shaw', image: 'stephenshaw.png' },
-        { name: 'XuXue Feng', image: 'xuxuefeng.png' },
-    ];
-
-    const statuses = [
-        'unqualified',
-        'qualified',
-        'new',
-        'negotiation',
-        'renewal',
-        'proposal',
-    ];
-    const customerService = new CustomerService();
-    // const productService = new ProductService();
-    const [currentPage, setCurrentPage] = useState(1);
-    const [loading, setLoading] = useState(false);
-    const [totalRecords, setTotalRecords] = useState(0);
-    const [postList, setPostList] = useState(null);
-    const [selectAll, setSelectAll] = useState(false);
-    const [selectedPostList, setSelectedPostList] = useState(null);
-    // const [selectedRepresentative, setSelectedRepresentative] = useState(null);
-    const [lazyParams, setLazyParams] = useState({
-        first: 0,
-        rows: 10,
-        page: 1,
-        sortField: null,
-        sortOrder: null,
-        filters: {
-            name: { value: '', matchMode: 'contains' },
-            'country.name': { value: '', matchMode: 'contains' },
-            company: { value: '', matchMode: 'contains' },
-            'representative.name': { value: '', matchMode: 'contains' },
+const PARAMS = {
+    page: 1,
+    published_only: true,
+    perPage: ROWS,
+    published_only: true,
+    sort: 'title',
+    draft: true,
+    filter: {
+        body: '',
+        tags: {
+            title: '',
+            slug: '',
         },
-    });
+        author: {
+            title: '',
+            slug: '',
+        },
+        category: {
+            title: '',
+            slug: '',
+        },
+        published_before: '',
+    },
+};
+
+const FILTER = {
+    first: 0,
+    rows: ROWS,
+    sortField: null,
+    sortOrder: null,
+    multiSortMeta: [],
+    filters: {
+        title: {
+            // operator: ,
+            constraints: [
+                { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ],
+        },
+        'author.name': {
+            constraints: [
+                { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ],
+        },
+        'category.title': {
+            constraints: [
+                { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ],
+        },
+        tags: {
+            constraints: [
+                { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+            ],
+        },
+    },
+    page: 1,
+    pageCount: 21,
+};
+
+const calculateCurrentPage = (first, perPage) => {
+    return first / perPage + 1;
+};
+
+function getParams(tableOptions) {
+    const sortField = tableOptions.sortField
+        ? tableOptions.sortOrder > 0
+            ? String(tableOptions.sortField)
+            : `-${String(tableOptions.sortField)}`
+        : '';
+    return {
+        page: tableOptions.page,
+        perPage: tableOptions.rows,
+        sort: sortField,
+        'filter.title': tableOptions.filters.title?.constraints[0].value ?? '',
+        'filter.author.name':
+            tableOptions.filters['author.name']?.constraints[0].value ?? '',
+        'filter.category.title':
+            tableOptions.filters['category.title']?.constraints[0].value ?? '',
+        'filter.tags.title':
+            tableOptions.filters['tags']?.constraints[0].value ?? '',
+    };
+}
+
+const BlogPost = () => {
+    const [options, setOptions] = useState({});
+    const [visibleBottom, setVisibleBottom] = useState(false);
+    const [lazyParams, setLazyParams] = useState(FILTER);
+
+    const newParams = useMemo(
+        () => ({
+            ...getParams(lazyParams),
+        }),
+        [lazyParams]
+    );
 
     const { data: blogList, isFetching } = usePaginatedBlog({
-        params: {},
+        params: newParams,
+        options,
     });
 
-    let loadLazyTimeout = null;
-
-    useEffect(() => {
-        loadLazyData();
-    }, [lazyParams]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const loadLazyData = () => {
-        setLoading(true);
-
-        if (loadLazyTimeout) {
-            clearTimeout(loadLazyTimeout);
-        }
-
-        //imitate delay of a backend call
-        // loadLazyTimeout = setTimeout(() => {
-        //     // customerService.getCustomersMedium({ lazyEvent: JSON.stringify(lazyParams) })
-        //     apiCall.get(`/admin/post/list?page=${currentPage}`).then(data => {
-        //         setCurrentPage(data?.data?.current_page ?? 1);
-        //         setTotalRecords(data?.data?.total ?? 0);
-        //         setPostList(data?.data?.items ?? null);
-        //         setLoading(false);
-        //     });
-        // }, Math.random() * 1000 + 250);
+    const onPageChange = e => {
+        setLazyParams(prev => ({
+            ...prev,
+            page: e.page + 1,
+            first: e.first,
+        }));
     };
 
-    const onSort = event => {
-        setLazyParams(event);
+    const onSort = e => {
+        setLazyParams(prev => ({
+            ...prev,
+            sortField: e.sortField,
+            sortOrder: e.sortOrder,
+        }));
     };
 
-    const onFilter = event => {
-        event['first'] = 0;
-        setLazyParams(event);
+    const onFilter = e => {
+        setLazyParams(prev => ({
+            ...prev,
+            filters: e.filters,
+            sortField: e.sortField,
+            sortOrder: e.sortOrder,
+        }));
     };
 
     const onSelectionChange = event => {
         const value = event.value;
-        setSelectedCustomers(value);
-        setSelectAll(value.length === totalRecords);
+        // setSelectAll(value.length === totalRecords);
     };
 
     const onSelectAllChange = event => {
         const selectAll = event.checked;
 
-        if (selectAll) {
-            customerService.getCustomersMedium().then(data => {
-                setSelectAll(true);
-                setSelectedCustomers(data.customers);
-            });
-        } else {
-            setSelectAll(false);
-            setSelectedCustomers([]);
-        }
+        // if (selectAll) {
+        //     customerService.getCustomersMedium().then(data => {
+        //         setSelectAll(true);
+        //         setSelectedCustomers(data.customers);
+        //     });
+        // } else {
+        //     setSelectAll(false);
+        //     setSelectedCustomers([]);
+        // }
     };
 
     const tagBodyTemplate = rowData => {
         const tagLists = rowData.tags.map(res => res.title);
         return tagLists.join(', ');
-    };
-
-    const initFilters1 = () => {
-        setFilters1({
-            global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            name: {
-                operator: FilterOperator.AND,
-                constraints: [
-                    { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-                ],
-            },
-            'country.name': {
-                operator: FilterOperator.AND,
-                constraints: [
-                    { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-                ],
-            },
-            representative: { value: null, matchMode: FilterMatchMode.IN },
-            date: {
-                operator: FilterOperator.AND,
-                constraints: [
-                    { value: null, matchMode: FilterMatchMode.DATE_IS },
-                ],
-            },
-            balance: {
-                operator: FilterOperator.AND,
-                constraints: [
-                    { value: null, matchMode: FilterMatchMode.EQUALS },
-                ],
-            },
-            status: {
-                operator: FilterOperator.OR,
-                constraints: [
-                    { value: null, matchMode: FilterMatchMode.EQUALS },
-                ],
-            },
-            activity: { value: null, matchMode: FilterMatchMode.BETWEEN },
-            verified: { value: null, matchMode: FilterMatchMode.EQUALS },
-        });
-        setGlobalFilterValue1('');
     };
 
     const postTagsChip = item => {
@@ -316,27 +301,38 @@ const PostsTable = () => {
                         </div>
                     </div>
                     <DataTable
-                        value={blogList?.pages[0]?.items}
+                        value={blogList?.items}
+                        paginator
+                        rows={lazyParams.rows}
                         lazy
-                        filterDisplay="row"
+                        // filterDisplay="row"
+
+                        filterDisplay="menu"
                         responsiveLayout="scroll"
                         dataKey="id"
-                        paginator
-                        first={1}
-                        rows={10}
-                        totalRecords={blogList?.pages[0]?.total}
-                        // onPage={currentPage}
-                        onPage={e => console.log(e)}
+                        first={lazyParams.first}
+                        totalRecords={blogList?.total}
+                        onPage={onPageChange}
                         onSort={onSort}
                         sortField={lazyParams.sortField}
                         sortOrder={lazyParams.sortOrder}
+                        // page
+                        // onPage={e => {
+                        //     setFirst(e.first);
+                        // }}
+                        // paginatorTemplate={{
+
+                        // }}
+                        // selectionPageOnly
+                        // sortField={lazyParams.sortField}
+                        // sortOrder={lazyParams.sortOrder}
                         onFilter={onFilter}
                         filters={lazyParams.filters}
                         loading={isFetching}
-                        selection={selectedPostList}
-                        onSelectionChange={onSelectionChange}
-                        selectAll={selectAll}
-                        onSelectAllChange={onSelectAllChange}
+                        // selection={selectedPostList}
+                        // onSelectionChange={onSelectionChange}
+                        // selectAll={selectAll}
+                        // onSelectAllChange={onSelectAllChange}
                     >
                         <Column
                             selectionMode="multiple"
@@ -379,4 +375,4 @@ const PostsTable = () => {
     );
 };
 
-export default PostsTable;
+export default BlogPost;
