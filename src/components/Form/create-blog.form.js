@@ -1,13 +1,13 @@
 import { Formik } from 'formik';
-import { Chips } from 'primereact/chips';
-import { InputText } from 'primereact/inputtext';
-import { Sidebar } from 'primereact/sidebar';
-import { ToggleButton } from 'primereact/togglebutton';
-import React from 'react';
-import { Editor } from 'primereact/editor';
+import { useSession } from 'next-auth/react';
 import { Button } from 'primereact/button';
+import { Chips } from 'primereact/chips';
+import { Editor } from 'primereact/editor';
+import { InputText } from 'primereact/inputtext';
+import { ToggleButton } from 'primereact/togglebutton';
 
-export function CreateBlog({ isOpen }) {
+export function CreateBlog({ onSubmit }) {
+    const { data: session } = useSession();
     const postTagsChip = item => {
         return (
             <div>
@@ -16,13 +16,6 @@ export function CreateBlog({ isOpen }) {
             </div>
         );
     };
-    // const postForm = useFormik({
-    //     initialValues: {
-    //         title: null,
-    //         publishOnSubmit: false,
-    //         tags: [],
-    //     },
-    // });
 
     return (
         <div className="card h-full w-full">
@@ -42,13 +35,14 @@ export function CreateBlog({ isOpen }) {
             </div>
             <Formik
                 initialValues={{
+                    user_id: session?.user?.id ?? '',
                     title: '',
                     tags: [],
                     body: '',
                     category: '',
                 }}
                 onSubmit={e => {
-                    console.log(e);
+                    onSubmit(e);
                 }}
             >
                 {({ values, setFieldValue, handleSubmit }) => (
@@ -129,7 +123,7 @@ export function CreateBlog({ isOpen }) {
                                     onTextChange={e =>
                                         setFieldValue('body', e.htmlValue)
                                     }
-                                    style={{ height: '320px' }}
+                                    style={{ minHeight: '320px' }}
                                 />
                             </div>
                             <Button type="submit">Submit</Button>
