@@ -1,43 +1,13 @@
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
-import { InputText } from 'primereact/inputtext';
-import { Sidebar } from 'primereact/sidebar';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 // import RichTextEditor from '@/components/RichTextEditor';
 import { usePaginatedBlog } from '@/hooks/blog';
-import { useFormik } from 'formik';
-import { Chips } from 'primereact/chips';
-import { ToggleButton } from 'primereact/togglebutton';
-import { combineKeys } from '@/utils/convertParamsObject';
-import { FilterMatchMode, FilterOperator } from 'primereact/api';
+import { useRouter } from 'next/router';
+import { FilterMatchMode } from 'primereact/api';
 
 const ROWS = 10;
-
-const PARAMS = {
-    page: 1,
-    published_only: true,
-    perPage: ROWS,
-    published_only: true,
-    sort: 'title',
-    draft: true,
-    filter: {
-        body: '',
-        tags: {
-            title: '',
-            slug: '',
-        },
-        author: {
-            title: '',
-            slug: '',
-        },
-        category: {
-            title: '',
-            slug: '',
-        },
-        published_before: '',
-    },
-};
 
 const FILTER = {
     first: 0,
@@ -94,9 +64,10 @@ function getParams(tableOptions) {
 
 const BlogPost = () => {
     const [options, setOptions] = useState({});
-    const [visibleBottom, setVisibleBottom] = useState(false);
     const [lazyParams, setLazyParams] = useState(FILTER);
     const [selectedPost, setSelectedPost] = useState(null);
+
+    const router = useRouter();
 
     const newParams = useMemo(
         () => ({
@@ -137,43 +108,12 @@ const BlogPost = () => {
 
     const onSelectionChange = e => {
         setSelectedPost(e.value);
-        // setSelectAll(value.length === totalRecords);
-    };
-
-    const onSelectAllChange = event => {
-        const selectAll = event.checked;
-
-        // if (selectAll) {
-        //     customerService.getCustomersMedium().then(data => {
-        //         setSelectAll(true);
-        //         setSelectedCustomers(data.customers);
-        //     });
-        // } else {
-        //     setSelectAll(false);
-        //     setSelectedCustomers([]);
-        // }
     };
 
     const tagBodyTemplate = rowData => {
         const tagLists = rowData.tags.map(res => res.title);
         return tagLists.join(', ');
     };
-
-    const postTagsChip = item => {
-        return (
-            <div>
-                <span>{item} - (active) </span>
-                <i className="pi pi-user-plus" style={{ fontSize: '14px' }}></i>
-            </div>
-        );
-    };
-    const postForm = useFormik({
-        initialValues: {
-            title: null,
-            publishOnSubmit: false,
-            tags: [],
-        },
-    });
 
     return (
         <div className="grid">
@@ -185,116 +125,9 @@ const BlogPost = () => {
                             <Button
                                 label="Add New Post"
                                 icon="pi pi-fw pi-plus-circle"
-                                onClick={() => setVisibleBottom(true)}
+                                onClick={() => router.push('/blog-post/create')}
                                 className="p-button-raised p-button-success"
                             />
-                            <Sidebar
-                                visible={visibleBottom}
-                                onHide={() => setVisibleBottom(false)}
-                                baseZIndex={1000}
-                                position="bottom"
-                                style={{ height: '90vh' }}
-                            >
-                                <div className="card h-full">
-                                    <div class="flex justify-content-between">
-                                        <h1
-                                            style={{
-                                                fontWeight: 'normal',
-                                                marginBottom: '1.25em',
-                                                textAlign: 'start',
-                                            }}
-                                        >
-                                            Make New Post
-                                        </h1>
-                                        <h2>
-                                            {process.env.FE_URI}/
-                                            {postForm.value?.title}
-                                        </h2>
-                                    </div>
-                                    <form>
-                                        <div className="flex flex-column flex-nowrap justify-content-start align-items-start gap-4">
-                                            <div className="flex gap-6 align-items-center w-full">
-                                                <div class="flex flex-grow-1">
-                                                    <span className="p-float-label w-full">
-                                                        <InputText
-                                                            id="title"
-                                                            className="p-inputtext-lg w-full h-full"
-                                                            onChange={
-                                                                postForm.handleChange
-                                                            }
-                                                            value={
-                                                                postForm.values
-                                                                    .title
-                                                            }
-                                                        />
-                                                        <label htmlFor="title mb-2">
-                                                            Title
-                                                        </label>
-                                                    </span>
-                                                </div>
-                                                <div class="flex flex-none">
-                                                    <ToggleButton
-                                                        onLabel="Publish"
-                                                        offLabel="Draft"
-                                                        id="publishOnSubmit"
-                                                        tooltip="Publish On Submit?"
-                                                        tooltipOptions={{
-                                                            position: 'left',
-                                                        }}
-                                                        checked={
-                                                            postForm.values
-                                                                .publishOnSubmit
-                                                        }
-                                                        onChange={
-                                                            postForm.handleChange
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-6 align-items-center w-full p-fluid">
-                                                <div className="flex-grow-1">
-                                                    <label htmlFor="postTags mb-2">
-                                                        Tags
-                                                    </label>
-                                                    <Chips
-                                                        id="postTags"
-                                                        value={
-                                                            postForm.values.tags
-                                                        }
-                                                        onChange={
-                                                            postForm.handleChange
-                                                        }
-                                                        multiple="true"
-                                                        separator=","
-                                                        itemTemplate={
-                                                            postTagsChip
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="w-4">
-                                                    <label htmlFor="postCategory">
-                                                        Category
-                                                    </label>
-                                                    <InputText
-                                                        id="postCategory"
-                                                        value={
-                                                            postForm.values
-                                                                .category
-                                                        }
-                                                        onChange={
-                                                            postForm.handleChange
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-column w-full gap-3">
-                                                <label>Body</label>
-                                                {/* <RichTextEditor /> */}
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </Sidebar>
                         </div>
                     </div>
                     <DataTable
@@ -302,8 +135,6 @@ const BlogPost = () => {
                         paginator
                         rows={lazyParams.rows}
                         lazy
-                        // filterDisplay="row"
-
                         filterDisplay="menu"
                         responsiveLayout="scroll"
                         dataKey="id"
@@ -313,27 +144,12 @@ const BlogPost = () => {
                         onSort={onSort}
                         sortField={lazyParams.sortField}
                         sortOrder={lazyParams.sortOrder}
-                        // page
-                        // onPage={e => {
-                        //     setFirst(e.first);
-                        // }}
-                        // paginatorTemplate={{
-
-                        // }}
-                        // selectionPageOnly
-                        // sortField={lazyParams.sortField}
-                        // sortOrder={lazyParams.sortOrder}
                         onFilter={onFilter}
                         filters={lazyParams.filters}
                         loading={isFetching}
                         rowHover
                         selection={selectedPost}
                         onSelectionChange={onSelectionChange}
-                        // onContextMenuSelectionChange={onSelectionChange}
-                        // selection={selectedPostList}
-                        // onSelectionChange={onSelectionChange}
-                        // selectAll={selectAll}
-                        // onSelectAllChange={onSelectAllChange}
                     >
                         <Column
                             selectionMode="multiple"
