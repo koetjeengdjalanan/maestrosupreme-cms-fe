@@ -1,18 +1,18 @@
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import { useState } from 'react';
-// import './DataTableDemo.css';
+import { UserForm } from '@/components/Form';
 import { useUserManagement } from '@/hooks/user-management';
 import { Avatar } from 'primereact/avatar';
+import { Column } from 'primereact/column';
+import { DataTable } from 'primereact/datatable';
 import { InputText } from 'primereact/inputtext';
 import { Sidebar } from 'primereact/sidebar';
+import { useState } from 'react';
 
 const UserManagement = () => {
-    const [selectedProduct1, setSelectedProduct1] = useState(null);
+    const [selected, setSelected] = useState(null);
     const [visibleRight, setVisibleRight] = useState(false);
     const [name, setName] = useState('');
 
-    const { data: users } = useUserManagement();
+    const { data: users, isLoading } = useUserManagement();
 
     const roleTemplate = rowData => {
         const roles = rowData?.roles?.map(res => res.name);
@@ -41,25 +41,13 @@ const UserManagement = () => {
             <Sidebar
                 visible={visibleRight}
                 position="right"
-                onHide={() => setVisibleRight(false)}
+                onHide={() => {
+                    setVisibleRight(false), setSelected(null);
+                }}
                 className="w-9"
             >
                 <h2>User Edit</h2>
-                <div className="flex flex-row">
-                    <div className="field col-6 sm:col-12">
-                        <InputText
-                            value={name}
-                            onChange={e => setName(e.target.name)}
-                        />
-                    </div>
-                    <div className="field col-6 sm:col-12">
-                        <InputText
-                            value={name}
-                            onChange={e => setName(e.target.name)}
-                        />
-                    </div>
-                </div>
-                {JSON.stringify(selectedProduct1)}
+                <UserForm data={selected} />
             </Sidebar>
             <div className="col-12">
                 <div className="card">
@@ -67,11 +55,12 @@ const UserManagement = () => {
                     <DataTable
                         value={users?.data ?? []}
                         selectionMode="single"
-                        selection={selectedProduct1}
+                        selection={selected}
                         onSelectionChange={e => {
-                            setSelectedProduct1(e.value);
+                            setSelected(e.value);
                         }}
-                        onClick={() => setVisibleRight(true)}
+                        loading={isLoading}
+                        onClick={e => setVisibleRight(true)}
                         dataKey="id"
                         responsiveLayout="scroll"
                     >
