@@ -72,10 +72,6 @@ const FILTER = {
     pageCount: 21,
 };
 
-const calculateCurrentPage = (first, perPage) => {
-    return first / perPage + 1;
-};
-
 function getParams(tableOptions) {
     const sortField = tableOptions.sortField
         ? tableOptions.sortOrder > 0
@@ -100,6 +96,7 @@ const BlogPost = () => {
     const [options, setOptions] = useState({});
     const [visibleBottom, setVisibleBottom] = useState(false);
     const [lazyParams, setLazyParams] = useState(FILTER);
+    const [selectedPost, setSelectedPost] = useState(null);
 
     const newParams = useMemo(
         () => ({
@@ -138,8 +135,8 @@ const BlogPost = () => {
         }));
     };
 
-    const onSelectionChange = event => {
-        const value = event.value;
+    const onSelectionChange = e => {
+        setSelectedPost(e.value);
         // setSelectAll(value.length === totalRecords);
     };
 
@@ -329,6 +326,10 @@ const BlogPost = () => {
                         onFilter={onFilter}
                         filters={lazyParams.filters}
                         loading={isFetching}
+                        rowHover
+                        selection={selectedPost}
+                        onSelectionChange={onSelectionChange}
+                        // onContextMenuSelectionChange={onSelectionChange}
                         // selection={selectedPostList}
                         // onSelectionChange={onSelectionChange}
                         // selectAll={selectAll}
