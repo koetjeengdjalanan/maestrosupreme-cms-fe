@@ -172,15 +172,15 @@ const BlogPost = () => {
                         />
                         <Column
                             field="category.title"
-                            sortable
-                            filter
+                            // sortable
+                            // filter
                             header="Category"
                             filterPlaceholder="Search category"
                         />
                         <Column
                             field="tags"
-                            sortable
-                            filter
+                            // sortable
+                            // filter
                             body={tagBodyTemplate}
                             header="Tags"
                             filterPlaceholder="Search tags"
