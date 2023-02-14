@@ -1,14 +1,18 @@
-import { useRoles } from '@/hooks/user-management';
-import { useUpdateRoles } from '@/hooks/user-management/useUpdateRoles';
+import {
+    useRoles,
+    useUpdateRoles,
+    useUpdateUser,
+} from '@/hooks/user-management';
 import { Formik } from 'formik';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { useState } from 'react';
-import rolesService from 'services/userManagement/roles.service';
 
-export function UserForm({ data, visible, onHide }) {
+export function UserUpdateForm({ data, visible, onHide }) {
+    const { mutateAsync: updateUser, isLoading } = useUpdateUser();
+
     return (
         <Dialog
             header="Edit user"
@@ -19,12 +23,18 @@ export function UserForm({ data, visible, onHide }) {
             {data && (
                 <Formik
                     initialValues={{
+                        id: data.id ?? '',
                         name: data.name ?? '',
                         username: data.username ?? '',
                         email: data.email ?? '',
                     }}
                     onSubmit={e => {
-                        console.log(e);
+                        try {
+                            updateUser(e);
+                            onHide();
+                        } catch (error) {
+                            console.log(error);
+                        }
                     }}
                 >
                     {({ values, setFieldValue, handleSubmit }) => (
@@ -101,6 +111,7 @@ export function UserForm({ data, visible, onHide }) {
                                 label="Submit"
                                 className="w-full"
                                 type="submit"
+                                loading={isLoading}
                             />
                         </form>
                     )}
@@ -152,4 +163,4 @@ function RoleOptions({ data }) {
     );
 }
 
-export default UserForm;
+export default UserUpdateForm;
