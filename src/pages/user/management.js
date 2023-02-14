@@ -3,14 +3,12 @@ import { useUserManagement } from '@/hooks/user-management';
 import { Avatar } from 'primereact/avatar';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
-import { InputText } from 'primereact/inputtext';
-import { Sidebar } from 'primereact/sidebar';
 import { useState } from 'react';
 
 const UserManagement = () => {
     const [selected, setSelected] = useState(null);
     const [visibleRight, setVisibleRight] = useState(false);
-    const [name, setName] = useState('');
+    const [visible, setVisible] = useState(false);
 
     const { data: users, isLoading } = useUserManagement();
 
@@ -38,17 +36,13 @@ const UserManagement = () => {
 
     return (
         <div className="grid">
-            <Sidebar
-                visible={visibleRight}
-                position="right"
+            <UserForm
+                data={selected}
+                visible={visible}
                 onHide={() => {
-                    setVisibleRight(false), setSelected(null);
+                    setVisible(false), setSelected(null);
                 }}
-                className="w-9"
-            >
-                <h2>User Edit</h2>
-                <UserForm data={selected} />
-            </Sidebar>
+            />
             <div className="col-12">
                 <div className="card">
                     <h5>User Management</h5>
@@ -60,7 +54,7 @@ const UserManagement = () => {
                             setSelected(e.value);
                         }}
                         loading={isLoading}
-                        onClick={e => setVisibleRight(true)}
+                        onClick={() => setVisible(true)}
                         dataKey="id"
                         responsiveLayout="scroll"
                     >

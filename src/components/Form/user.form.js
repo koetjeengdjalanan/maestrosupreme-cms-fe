@@ -1,103 +1,154 @@
+import { useRoles } from '@/hooks/user-management';
+import { useUpdateRoles } from '@/hooks/user-management/useUpdateRoles';
 import { Formik } from 'formik';
 import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
+import { Dialog } from 'primereact/dialog';
+import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
-import React from 'react';
+import { useState } from 'react';
+import rolesService from 'services/userManagement/roles.service';
 
-export function UserForm({ data }) {
+export function UserForm({ data, visible, onHide }) {
     return (
-        <Formik
-            initialValues={{
-                name: '',
-                username: '',
-                email: '',
-                password: '',
-            }}
-            onSubmit={e => {
-                console.log(e);
-            }}
+        <Dialog
+            header="Edit user"
+            visible={visible}
+            style={{ maxWidth: '500px' }}
+            onHide={onHide}
         >
-            {({ values, setFieldValue, handleSubmit }) => (
-                <form onSubmit={handleSubmit}>
-                    <div class="formgrid grid">
-                        <div class="field col-12 md:col-6">
-                            <label
-                                htmlFor="name"
-                                className="block text-900 font-medium mb-2"
-                            >
-                                Name
-                            </label>
-                            <InputText
-                                id="name"
-                                value={values.name}
-                                onChange={e =>
-                                    setFieldValue('name', e.target.value)
-                                }
-                                type="text"
-                                placeholder="Email address"
-                                className="w-full mb-3"
+            {data && (
+                <Formik
+                    initialValues={{
+                        name: data.name ?? '',
+                        username: data.username ?? '',
+                        email: data.email ?? '',
+                    }}
+                    onSubmit={e => {
+                        console.log(e);
+                    }}
+                >
+                    {({ values, setFieldValue, handleSubmit }) => (
+                        <form onSubmit={handleSubmit}>
+                            <div className="formgrid grid mb-3">
+                                <div className="field col-12">
+                                    <label
+                                        htmlFor="name"
+                                        className="block text-900 font-medium mb-2"
+                                    >
+                                        Name
+                                    </label>
+                                    <InputText
+                                        id="name"
+                                        value={values.name}
+                                        onChange={e =>
+                                            setFieldValue(
+                                                'name',
+                                                e.target.value
+                                            )
+                                        }
+                                        type="text"
+                                        placeholder="Name"
+                                        className="w-full mb-3"
+                                    />
+                                </div>
+                                <div className="field col-12">
+                                    <label
+                                        htmlFor="username"
+                                        className="block text-900 font-medium mb-2"
+                                    >
+                                        Username
+                                    </label>
+                                    <InputText
+                                        id="username"
+                                        value={values.username}
+                                        onChange={e =>
+                                            setFieldValue(
+                                                'username',
+                                                e.target.value
+                                            )
+                                        }
+                                        type="text"
+                                        placeholder="Username"
+                                        className="w-full mb-3"
+                                    />
+                                </div>
+                                <div className="field col-12">
+                                    <label
+                                        htmlFor="email"
+                                        className="block text-900 font-medium mb-2"
+                                    >
+                                        Email
+                                    </label>
+                                    <InputText
+                                        id="email"
+                                        type="text"
+                                        value={values.email}
+                                        onChange={e =>
+                                            setFieldValue(
+                                                'email',
+                                                e.target.value
+                                            )
+                                        }
+                                        placeholder="Email address"
+                                        className="w-full mb-3"
+                                    />
+                                </div>
+                                <div className="field col-12">
+                                    <RoleOptions data={data} />
+                                </div>
+                            </div>
+                            <Button
+                                label="Submit"
+                                className="w-full"
+                                type="submit"
                             />
-                        </div>
-                        <div class="field col-12 md:col-6">
-                            <label
-                                htmlFor="username"
-                                className="block text-900 font-medium mb-2"
-                            >
-                                Username
-                            </label>
-                            <InputText
-                                id="username"
-                                value={values.username}
-                                onChange={e =>
-                                    setFieldValue('username', e.target.value)
-                                }
-                                type="text"
-                                placeholder="Username"
-                                className="w-full mb-3"
-                            />
-                        </div>
-                        <div class="field col-12 md:col-6">
-                            <label
-                                htmlFor="email"
-                                className="block text-900 font-medium mb-2"
-                            >
-                                Email
-                            </label>
-                            <InputText
-                                id="email"
-                                type="text"
-                                value={values.email}
-                                onChange={e =>
-                                    setFieldValue('email', e.target.value)
-                                }
-                                placeholder="Email address"
-                                className="w-full mb-3"
-                            />
-                        </div>
-                        <div class="field col-12 md:col-6">
-                            <label
-                                htmlFor="Password"
-                                className="block text-900 font-medium mb-2"
-                            >
-                                Password
-                            </label>
-                            <InputText
-                                id="Password"
-                                type="password"
-                                value={values.password}
-                                onChange={e =>
-                                    setFieldValue('password', e.target.value)
-                                }
-                                placeholder="Password"
-                                className="w-full mb-3"
-                            />
-                        </div>
-
-                        <Button label="Submit" type="submit" />
-                    </div>
-                </form>
+                        </form>
+                    )}
+                </Formik>
             )}
-        </Formik>
+        </Dialog>
+    );
+}
+
+function RoleOptions({ data }) {
+    const [selectedRole, setSelectedRole] = useState(data.roles[0]?.id);
+    const { data: roleOptions, isLoading } = useRoles();
+    const { mutateAsync, isLoading: updating } = useUpdateRoles();
+
+    return (
+        <>
+            <label htmlFor="role" className="block text-900 font-medium mb-2">
+                Role
+            </label>
+            {isLoading || updating ? (
+                <Dropdown
+                    placeholder="Loading..."
+                    className="w-full"
+                    options={undefined}
+                    readOnly
+                />
+            ) : (
+                <Dropdown
+                    id="role"
+                    value={selectedRole}
+                    onChange={e => {
+                        try {
+                            setSelectedRole(e.value);
+                            mutateAsync({
+                                user_id: data?.id,
+                                role_id: e.value,
+                            });
+                        } catch (error) {
+                            console.log(error);
+                        }
+                    }}
+                    options={roleOptions}
+                    optionLabel="name"
+                    placeholder="Select Role"
+                    className="w-full"
+                />
+            )}
+        </>
     );
 }
 
