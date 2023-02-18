@@ -11,101 +11,36 @@ import { FileUpload } from 'primereact/fileupload';
 import { InputSwitch } from 'primereact/inputswitch';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { Paginator } from 'primereact/paginator';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ProductService } from '../../../demo/service/ProductService';
+import { useMemo, useRef, useState } from 'react';
 
-function getParams() {
-    null;
-}
+const PER_PAGE = 9;
+const PAGE = 1;
+
+const DATA_VIEW_OPTIONS = {
+    first: 0,
+    rows: PER_PAGE,
+    page: PAGE - 1,
+};
 
 const FormEvent = () => {
-    const listValue = [
-        { name: 'San Francisco', code: 'SF' },
-        { name: 'London', code: 'LDN' },
-        { name: 'Paris', code: 'PRS' },
-        { name: 'Istanbul', code: 'IST' },
-        { name: 'Berlin', code: 'BRL' },
-        { name: 'Barcelona', code: 'BRC' },
-        { name: 'Rome', code: 'RM' },
-    ];
+    const [options, setOptions] = useState(DATA_VIEW_OPTIONS);
 
-    const [dataViewValue, setDataViewValue] = useState(null);
-    const [globalFilterValue, setGlobalFilterValue] = useState('');
-    const [sortOrder, setSortOrder] = useState(null);
-    const [sortField, setSortField] = useState(null);
-    const [dateRanges, setDateRanges] = useState(null);
-    const [lazyParams, setLazyParams] = useState(null);
-    const [options, setOptions] = useState({});
-    const [selectedForm, setSelectedForm] = useState({});
-    const [paginateFirst, setPaginateFirst] = useState(0);
-
-    const sortOptions = [
-        { label: 'Price High to Low', value: '!price' },
-        { label: 'Price Low to High', value: 'price' },
-    ];
-
-    const newParams = useMemo(
+    const params = useMemo(
         () => ({
-            ...getParams(lazyParams),
+            perPage: options.rows,
+            page: options.page + 1,
         }),
-        [lazyParams]
+        [options]
     );
 
     const { data: formList, isFetching } = usePaginatedForm({
-        params: null,
-        options,
+        params,
+        // options,
     });
-    // console.log(formList);
 
-    useEffect(() => {
-        const productService = new ProductService();
-        productService.getProducts().then(data => setDataViewValue(data));
-        setGlobalFilterValue('');
-    }, []);
-
-    const onFilter = e => {
-        const value = e.target.value;
-        setGlobalFilterValue(value);
-        if (value.length === 0) {
-            setFilteredValue(null);
-        } else {
-            const filtered = dataViewValue.filter(product => {
-                return product.name.toLowerCase().includes(value);
-            });
-            setFilteredValue(filtered);
-        }
+    const onPageChange = e => {
+        setOptions(e);
     };
-
-    const dataViewHeader = (
-        <div className="flex flex-column md:flex-row md:justify-content-between gap-2">
-            <div className="flex flex-row flex-grow-1 align-items-center gap-1">
-                <label htmlFor="dateRange">Pick Date Ranges:</label>
-                <Calendar
-                    id="dateRage"
-                    value={dateRanges}
-                    onChange={e => setDateRanges(e.value)}
-                    selectionMode="range"
-                    readOnlyInput
-                />
-                <Button
-                    icon="pi pi-times-circle"
-                    className="p-button-rounded p-button-plain p-button-text"
-                    aria-label="clear"
-                    onClick={() => setDateRanges(null)}
-                    visible={dateRanges !== null}
-                />
-            </div>
-            <span className="p-input-icon-left">
-                <i className="pi pi-search" />
-                <InputText
-                    value={globalFilterValue}
-                    onChange={onFilter}
-                    placeholder="Search by Name"
-                />
-            </span>
-        </div>
-    );
 
     const itemTemplate = data => {
         if (!data) {
@@ -114,7 +49,7 @@ const FormEvent = () => {
         return (
             <DataViewTemplate
                 data={data}
-                onSelect={data => setSelectedForm(data)}
+                // onSelect={data => setSelectedForm(data)}
             />
         );
     };
@@ -128,32 +63,33 @@ const FormEvent = () => {
                         value={formList?.item ?? []}
                         layout="grid"
                         paginator
-                        first={paginateFirst}
+                        first={options.first}
                         totalRecords={formList?.total}
-                        rows={formList?.per_page ?? 9}
+                        rows={options.rows}
                         rowsPerPageOptions={[9, 15, 21, 27]}
-                        sortOrder={sortOrder}
-                        sortField={sortField}
+                        // sortField={sortField}
+                        onPage={onPageChange}
                         itemTemplate={itemTemplate}
                         lazy={true}
                         // header={dataViewHeader}
                         loading={isFetching}
-                    ></DataView>
+                    />
                 </div>
             </div>
         </div>
     );
 };
 
-function DataViewTemplate({ data, onSelect, onHide }) {
+function DataViewTemplate({ data, onHide }) {
+    const { data: session } = useSession();
     const formRef = useRef(null);
     const [dialogVisible, setDialogVisible] = useState(false);
     const [imageThumbnail, setImageThumbnail] = useState(
-        data?.media[0]?.path ?? null
+        data?.media[0]?.path ?? ''
     );
+
     const [useExternalLinkImage, setExternalLinkImage] = useState(false);
     const { mutate } = useUpdateForm();
-    const { data: session } = useSession();
 
     return (
         <>
@@ -212,7 +148,7 @@ function DataViewTemplate({ data, onSelect, onHide }) {
                                 tooltip="Edit"
                                 onClick={() => {
                                     setDialogVisible(true);
-                                    onSelect(data);
+                                    // onSelect(data);
                                 }}
                                 tooltipOptions={{
                                     position: 'bottom',
@@ -222,8 +158,8 @@ function DataViewTemplate({ data, onSelect, onHide }) {
                             />
                             <Button
                                 className={`p-button-danger ${
-                                    session.user?.role[0] != 'Super Admin' ||
-                                    session.user?.role[0] != 'Super Admin'
+                                    session?.user?.role[0] != 'Super Admin' ||
+                                    session?.user?.role[0] != 'Super Admin'
                                         ? 'hidden'
                                         : ''
                                 }`}
@@ -241,7 +177,7 @@ function DataViewTemplate({ data, onSelect, onHide }) {
             </div>
             <Formik
                 initialValues={{
-                    user_id: session.user?.id,
+                    user_id: session?.user?.id,
                     id: data?.id,
                     title: data?.title,
                     slug: data?.slug,
@@ -297,9 +233,7 @@ function DataViewTemplate({ data, onSelect, onHide }) {
                                 <div className="flex flex-row mt-5 gap-5">
                                     <div
                                         className={`flex-column justify-content-center ${
-                                            imageThumbnail != null
-                                                ? 'flex'
-                                                : 'hidden'
+                                            imageThumbnail ? 'flex' : 'hidden'
                                         }`}
                                     >
                                         <img
@@ -340,7 +274,7 @@ function DataViewTemplate({ data, onSelect, onHide }) {
                                             <InputText
                                                 id="path"
                                                 name="path"
-                                                value={imageThumbnail}
+                                                value={imageThumbnail ?? ''}
                                             />
                                         </div>
                                         <div
