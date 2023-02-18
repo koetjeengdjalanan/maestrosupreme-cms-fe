@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { usePaginatedBlog } from '@/hooks/blog';
 import { useRouter } from 'next/router';
 import { FilterMatchMode } from 'primereact/api';
+import { Dialog } from 'primereact/dialog';
 
 const ROWS = 10;
 
@@ -63,9 +64,11 @@ function getParams(tableOptions) {
 }
 
 const BlogPost = () => {
-    const [options, setOptions] = useState({});
     const [lazyParams, setLazyParams] = useState(FILTER);
+    const [selectedPosts, setSelectedPosts] = useState(null);
     const [selectedPost, setSelectedPost] = useState(null);
+    const [isDelete, setIsDelete] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
 
     const router = useRouter();
 
@@ -75,10 +78,8 @@ const BlogPost = () => {
         }),
         [lazyParams]
     );
-
     const { data: blogList, isFetching } = usePaginatedBlog({
         params: newParams,
-        options,
     });
 
     const onPageChange = e => {
@@ -107,7 +108,7 @@ const BlogPost = () => {
     };
 
     const onSelectionChange = e => {
-        setSelectedPost(e.value);
+        setSelectedPosts(e.value);
     };
 
     const tagBodyTemplate = rowData => {
@@ -115,81 +116,160 @@ const BlogPost = () => {
         return tagLists.join(', ');
     };
 
+    const actionsTemplate = rowData => {
+        return (
+            <div className="flex align-items-center gap-3">
+                <Button
+                    className="p-button-success"
+                    label="Edit"
+                    icon="pi pi-pencil"
+                    onClick={() => {
+                        router.push(`/blog-post/edit/${rowData.id}`);
+                    }}
+                />
+                <Button
+                    className="p-button-danger"
+                    label="Delete"
+                    icon="pi pi-trash"
+                    onClick={() => {
+                        setSelectedPost(rowData);
+                        setIsDelete(true);
+                    }}
+                />
+            </div>
+        );
+    };
+
     return (
-        <div className="grid">
-            <div className="col-12">
-                <div className="card">
-                    <div className="flex justify-content-between flex-wrap">
-                        <h1>Post List</h1>
-                        <div>
-                            <Button
-                                label="Add New Post"
-                                icon="pi pi-fw pi-plus-circle"
-                                onClick={() => router.push('/blog-post/create')}
-                                className="p-button-raised p-button-success"
-                            />
+        <>
+            <div className="grid">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="flex justify-content-between flex-wrap mb-3">
+                            <h1 className="m-0">Post List</h1>
+                            <div className="flex justify-content-end gap-3">
+                                <Button
+                                    label="Delete"
+                                    icon="pi pi-fw pi-trash"
+                                    onClick={() =>
+                                        router.push('/blog-post/create')
+                                    }
+                                    className="p-button-raised p-button-danger"
+                                />
+                                <Button
+                                    label="Add New Post"
+                                    icon="pi pi-fw pi-plus-circle"
+                                    onClick={() =>
+                                        router.push('/blog-post/create')
+                                    }
+                                    className="p-button-raised p-button-success"
+                                />
+                            </div>
                         </div>
+                        <DataTable
+                            value={blogList?.items}
+                            paginator
+                            rows={lazyParams.rows}
+                            lazy
+                            filterDisplay="menu"
+                            responsiveLayout="scroll"
+                            dataKey="id"
+                            first={lazyParams.first}
+                            totalRecords={blogList?.total}
+                            onPage={onPageChange}
+                            onSort={onSort}
+                            sortField={lazyParams.sortField}
+                            sortOrder={lazyParams.sortOrder}
+                            onFilter={onFilter}
+                            filters={lazyParams.filters}
+                            loading={isFetching}
+                            rowHover
+                            selection={selectedPosts}
+                            onSelectionChange={onSelectionChange}
+                        >
+                            <Column
+                                selectionMode="multiple"
+                                headerStyle={{ width: '3em' }}
+                            ></Column>
+                            <Column
+                                field="title"
+                                header="title"
+                                sortable
+                                filter
+                                filterPlaceholder="Search title"
+                            />
+                            <Column
+                                field="author.name"
+                                sortable
+                                header="author"
+                                filterField="author.name"
+                                filter
+                                filterPlaceholder="Search author"
+                            />
+                            <Column
+                                field="category.title"
+                                // sortable
+                                // filter
+                                header="Category"
+                                filterPlaceholder="Search category"
+                            />
+                            <Column
+                                field="tags"
+                                // sortable
+                                // filter
+                                body={tagBodyTemplate}
+                                header="Tags"
+                                filterPlaceholder="Search tags"
+                            />
+                            <Column
+                                header="Action"
+                                body={actionsTemplate}
+                                exportable={false}
+                                style={{ minWidth: '8rem' }}
+                            ></Column>
+                        </DataTable>
                     </div>
-                    <DataTable
-                        value={blogList?.items}
-                        paginator
-                        rows={lazyParams.rows}
-                        lazy
-                        filterDisplay="menu"
-                        responsiveLayout="scroll"
-                        dataKey="id"
-                        first={lazyParams.first}
-                        totalRecords={blogList?.total}
-                        onPage={onPageChange}
-                        onSort={onSort}
-                        sortField={lazyParams.sortField}
-                        sortOrder={lazyParams.sortOrder}
-                        onFilter={onFilter}
-                        filters={lazyParams.filters}
-                        loading={isFetching}
-                        rowHover
-                        selection={selectedPost}
-                        onSelectionChange={onSelectionChange}
-                    >
-                        <Column
-                            selectionMode="multiple"
-                            headerStyle={{ width: '3em' }}
-                        ></Column>
-                        <Column
-                            field="title"
-                            header="title"
-                            sortable
-                            filter
-                            filterPlaceholder="Search title"
-                        />
-                        <Column
-                            field="author.name"
-                            sortable
-                            header="author"
-                            filterField="author.name"
-                            filter
-                            filterPlaceholder="Search author"
-                        />
-                        <Column
-                            field="category.title"
-                            // sortable
-                            // filter
-                            header="Category"
-                            filterPlaceholder="Search category"
-                        />
-                        <Column
-                            field="tags"
-                            // sortable
-                            // filter
-                            body={tagBodyTemplate}
-                            header="Tags"
-                            filterPlaceholder="Search tags"
-                        />
-                    </DataTable>
                 </div>
             </div>
-        </div>
+            <ModalDeletePost
+                visible={isDelete}
+                onHide={() => setIsDelete(false)}
+                onDelete={() => console.log(selectedPost)}
+            />
+        </>
     );
 };
+
+function ModalDeletePost({ visible, onHide, onDelete, isLoading }) {
+    return (
+        <Dialog
+            header="Delete Post"
+            visible={visible}
+            onHide={onHide}
+            footer={
+                <div className="flex justify-content-end gap-3">
+                    <Button
+                        label="Cancel"
+                        icon="pi pi-times"
+                        onClick={onHide}
+                        className="p-button-text"
+                        autoFocus
+                        disabled={isLoading}
+                    />
+
+                    <Button
+                        className="p-button-danger"
+                        label="Delete"
+                        icon="pi pi-trash"
+                        onClick={() => onDelete()}
+                        loading={isLoading}
+                    />
+                </div>
+            }
+        >
+            <p className="m-0">Are you sure you want to delete this Post?</p>
+        </Dialog>
+    );
+}
 
 export default BlogPost;

@@ -4,9 +4,10 @@ import { Button } from 'primereact/button';
 import { Chips } from 'primereact/chips';
 import { Editor } from 'primereact/editor';
 import { InputText } from 'primereact/inputtext';
+import { InputTextarea } from 'primereact/inputtextarea';
 import { ToggleButton } from 'primereact/togglebutton';
 
-export function CreateBlog({ onSubmit }) {
+export function BlogForm({ onSubmit }) {
     const { data: session } = useSession();
     const postTagsChip = item => {
         return (
@@ -116,6 +117,21 @@ export function CreateBlog({ onSubmit }) {
                                     />
                                 </div>
                             </div>
+                            <div className="grid align-items-start w-full p-fluid">
+                                <div className="col-12">
+                                    <label htmlFor="excerpt">Excerpt</label>
+                                    <InputTextarea
+                                        id="excerpt"
+                                        value={values.category}
+                                        onChange={e =>
+                                            setFieldValue(
+                                                'excerpt',
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
                             <div className="flex flex-column w-full gap-3">
                                 <label>Body</label>
                                 <Editor
@@ -135,4 +151,4 @@ export function CreateBlog({ onSubmit }) {
     );
 }
 
-export default CreateBlog;
+export default BlogForm;
