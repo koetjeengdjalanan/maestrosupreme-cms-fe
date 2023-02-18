@@ -1,5 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { usePaginatedForm, useUpdateForm } from '@/hooks/form';
+import { FileUploader } from '@/components/Input/BaseInput';
+import { useCreateForm, usePaginatedForm, useUpdateForm } from '@/hooks/form';
+import { useAssignMedia } from '@/hooks/form/useAssignFormMedia';
 import dayjs from 'dayjs';
 import { Formik } from 'formik';
 import { useSession } from 'next-auth/react';
@@ -24,6 +26,8 @@ const DATA_VIEW_OPTIONS = {
 
 const FormEvent = () => {
     const [options, setOptions] = useState(DATA_VIEW_OPTIONS);
+    const [isModalFormOpen, setIsModalFormOpen] = useState(false);
+    const [selectedData, setSelectedForm] = useState({});
 
     const params = useMemo(
         () => ({
@@ -42,6 +46,19 @@ const FormEvent = () => {
         setOptions(e);
     };
 
+    const onSelect = data => {
+        setSelectedForm(data);
+    };
+
+    const handleOpenModalForm = () => {
+        setIsModalFormOpen(true);
+    };
+
+    const onClose = () => {
+        setIsModalFormOpen(false);
+        setSelectedForm(null);
+    };
+
     const itemTemplate = data => {
         if (!data) {
             return;
@@ -49,51 +66,55 @@ const FormEvent = () => {
         return (
             <DataViewTemplate
                 data={data}
-                // onSelect={data => setSelectedForm(data)}
+                onSelect={onSelect}
+                handleModalFormOpen={handleOpenModalForm}
             />
         );
     };
 
     return (
-        <div className="grid list-demo">
-            <div className="col-12">
-                <div className="card">
-                    <h1>Event Form List</h1>
-                    <DataView
-                        value={formList?.item ?? []}
-                        layout="grid"
-                        paginator
-                        first={options.first}
-                        totalRecords={formList?.total}
-                        rows={options.rows}
-                        rowsPerPageOptions={[9, 15, 21, 27]}
-                        // sortField={sortField}
-                        onPage={onPageChange}
-                        itemTemplate={itemTemplate}
-                        lazy={true}
-                        // header={dataViewHeader}
-                        loading={isFetching}
-                    />
+        <>
+            <div className="grid list-demo">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="flex align-items-center justify-content-between flex-wrap">
+                            <h1>Event Form List</h1>
+                            <Button
+                                icon="pi pi-plus"
+                                label="Add new"
+                                onClick={handleOpenModalForm}
+                            />
+                        </div>
+                        <DataView
+                            value={formList?.item ?? []}
+                            layout="grid"
+                            paginator
+                            first={options.first}
+                            totalRecords={formList?.total}
+                            rows={options.rows}
+                            rowsPerPageOptions={[9, 15, 21, 27]}
+                            onPage={onPageChange}
+                            itemTemplate={itemTemplate}
+                            lazy={true}
+                            loading={isFetching}
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+            <ModalForm
+                data={selectedData}
+                isOpen={isModalFormOpen}
+                onClose={onClose}
+            />
+        </>
     );
 };
 
-function DataViewTemplate({ data, onHide }) {
+function DataViewTemplate({ data, onSelect, handleModalFormOpen }) {
     const { data: session } = useSession();
-    const formRef = useRef(null);
-    const [dialogVisible, setDialogVisible] = useState(false);
-    const [imageThumbnail, setImageThumbnail] = useState(
-        data?.media[0]?.path ?? ''
-    );
-
-    const [useExternalLinkImage, setExternalLinkImage] = useState(false);
-    const { mutate } = useUpdateForm();
-
     return (
         <>
-            <div className="col-12 lg:col-4">
+            <div className="col-12 md:col-6 xl:col-4">
                 <div className="card m-3 border-1 surface-border">
                     <div className="flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
                         <div className="flex align-items-center">
@@ -102,11 +123,6 @@ function DataViewTemplate({ data, onHide }) {
                                 {data?.author?.name}
                             </span>
                         </div>
-                        {/* <span
-                        className={`product-badge status-${data.inventoryStatus.toLowerCase()}`}
-                    >
-                        {data.inventoryStatus}
-                    </span> */}
                     </div>
                     <div className="flex flex-column align-items-center text-center mb-3">
                         <img
@@ -147,8 +163,8 @@ function DataViewTemplate({ data, onHide }) {
                                 icon="pi pi-pencil"
                                 tooltip="Edit"
                                 onClick={() => {
-                                    setDialogVisible(true);
-                                    // onSelect(data);
+                                    handleModalFormOpen();
+                                    onSelect(data);
                                 }}
                                 tooltipOptions={{
                                     position: 'bottom',
@@ -175,9 +191,68 @@ function DataViewTemplate({ data, onHide }) {
                     </div>
                 </div>
             </div>
+        </>
+    );
+}
+
+const ModalForm = ({ data, isOpen, onClose }) => {
+    const { data: session } = useSession();
+    const formRef = useRef(null);
+
+    const [imageUrl, setImageUrl] = useState(
+        Array.isArray(data?.media) ? data?.media[0]?.path : ''
+    );
+    const [externalImageUrl, setExternalImageUrl] = useState('');
+
+    const [useExternalLinkImage, setExternalLinkImage] = useState(false);
+    const { mutate: createForm, isLoading: creating } = useCreateForm();
+    const { mutate: updateForm, updating } = useUpdateForm();
+    const { mutate: assignMedia } = useAssignMedia();
+
+    const onUploadImage = newUrl => {
+        assignMedia(
+            {
+                path: path,
+                form_id: data?.id,
+            },
+            {
+                onSuccess() {
+                    setImageUrl(newUrl);
+                },
+            }
+        );
+    };
+
+    return (
+        <Dialog
+            draggable={false}
+            header="Edit Form / Event"
+            visible={isOpen}
+            style={{ width: '50vw' }}
+            onHide={onClose}
+            footer={
+                <div>
+                    <Button
+                        label="Cancel"
+                        icon="pi pi-times"
+                        onClick={onClose}
+                        className="p-button-text p-button-danger"
+                    />
+                    <Button
+                        label="Submit"
+                        // type="submit"
+                        icon="pi pi-check"
+                        loading={updating || creating}
+                        onClick={() => formRef.current?.requestSubmit()}
+                        autoFocus
+                    />
+                </div>
+            }
+            dismissableMask
+        >
             <Formik
                 initialValues={{
-                    user_id: session?.user?.id,
+                    user_id: session?.user?.id ?? '',
                     id: data?.id,
                     title: data?.title,
                     slug: data?.slug,
@@ -195,53 +270,26 @@ function DataViewTemplate({ data, onHide }) {
                         expire: expireDate,
                         publish_date: publishDate,
                     };
-                    mutate(payload);
+                    if (e.id) {
+                        updateForm(payload, {
+                            onSuccess: () => {
+                                onClose();
+                            },
+                        });
+                        return;
+                    }
+                    createForm(payload, {
+                        onSuccess: () => {
+                            onClose();
+                        },
+                    });
                 }}
             >
                 {({ values, setFieldValue, handleSubmit }) => (
                     <form ref={formRef} onSubmit={handleSubmit}>
-                        <Dialog
-                            draggable={false}
-                            header="Edit Form / Event"
-                            visible={dialogVisible}
-                            style={{ width: '50vw' }}
-                            onHide={() => {
-                                setDialogVisible(false);
-                            }}
-                            footer={
-                                <div>
-                                    <Button
-                                        label="Cancel"
-                                        icon="pi pi-times"
-                                        onClick={() => setDialogVisible(false)}
-                                        className="p-button-text p-button-danger"
-                                    />
-                                    <Button
-                                        label="Submit"
-                                        // type="submit"
-                                        icon="pi pi-check"
-                                        onClick={() =>
-                                            formRef.current?.requestSubmit()
-                                        }
-                                        autoFocus
-                                    />
-                                </div>
-                            }
-                            dismissableMask
-                        >
-                            <div className="flex flex-column gap-4">
-                                <div className="flex flex-row mt-5 gap-5">
-                                    <div
-                                        className={`flex-column justify-content-center ${
-                                            imageThumbnail ? 'flex' : 'hidden'
-                                        }`}
-                                    >
-                                        <img
-                                            src={imageThumbnail}
-                                            alt={data.name}
-                                            className="max-h-20rem w-min"
-                                        />
-                                    </div>
+                        <div className="flex flex-column gap-4">
+                            {values?.id && (
+                                <div className="flex flex-column mt-5 gap-5">
                                     <div className="flex flex-column flex-grow-1">
                                         <div className="flex flex-row justify-content-end align-items-center mb-3 gap-3">
                                             <label htmlFor="externalLink">
@@ -269,12 +317,17 @@ function DataViewTemplate({ data, onHide }) {
                                                 htmlFor="path"
                                                 className="mb-2"
                                             >
-                                                Image Link
+                                                Image Url
                                             </label>
                                             <InputText
                                                 id="path"
                                                 name="path"
-                                                value={imageThumbnail ?? ''}
+                                                value={externalImageUrl ?? ''}
+                                                onChange={e =>
+                                                    setExternalImageUrl(
+                                                        e.target.value
+                                                    )
+                                                }
                                             />
                                         </div>
                                         <div
@@ -284,187 +337,165 @@ function DataViewTemplate({ data, onHide }) {
                                                     : 'flex'
                                             }`}
                                         >
-                                            <FileUpload
-                                                name="demo[]"
-                                                url={'/api/upload'}
-                                                multiple
-                                                accept="image/*"
-                                                maxFileSize={1000000}
-                                                emptyTemplate={
-                                                    <p className="m-0">
-                                                        Drag and drop files to
-                                                        here to upload.
-                                                    </p>
-                                                }
+                                            <FileUploader
+                                                isEdit
+                                                defaultValue={imageUrl}
+                                                onUpload={onUploadImage}
                                             />
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-column">
-                                    <label htmlFor="title" className="mb-2">
-                                        Title
-                                    </label>
-                                    <InputText
-                                        id="title"
-                                        name="title"
-                                        placeholder="Form Title"
-                                        className="p-inputtext-md w-full h-full"
-                                        value={values.title}
-                                        onChange={e =>
-                                            setFieldValue(
-                                                'title',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="flex flex-column">
-                                    <label htmlFor="slug" className="mb-2">
-                                        Survey Link
-                                    </label>
-                                    <InputText
-                                        id="slug"
-                                        name="slug"
-                                        placeholder="Lime Survey Link"
-                                        className="p-inputtext-md w-full h-full"
-                                        value={values.slug}
-                                        onChange={e =>
-                                            setFieldValue(
-                                                'slug',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="flex flex-column">
-                                    <label htmlFor="blog_url" className="mb-2">
-                                        External URL
-                                    </label>
-                                    <InputText
-                                        id="blog_url"
-                                        name="blog_url"
-                                        placeholder="Related BlogPost or Other External URL"
-                                        className="p-inputtext-md w-full h-full"
-                                        value={values.blog_url}
-                                        onChange={e =>
-                                            setFieldValue(
-                                                'blog_url',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="flex flex-column">
-                                    <label htmlFor="excerpt" className="mb-2">
-                                        Excerpt (Short Description)
-                                    </label>
-                                    <InputText
-                                        disabled
-                                        id="excerpt"
-                                        name="excerpt"
-                                        placeholder="Auto Generated From Description"
-                                        className="p-inputtext-md w-full h-full"
-                                        value={values.excerpt}
-                                    />
-                                </div>
-                                <div className="flex flex-column">
-                                    <label
-                                        htmlFor="description"
-                                        className="mb-2"
-                                    >
-                                        Description
-                                    </label>
-                                    <InputTextarea
-                                        autoResize
-                                        id="description"
-                                        name="description"
-                                        placeholder="Event / Form Description"
-                                        className="p-inputtext-md w-full"
-                                        rows={5}
-                                        value={values.description}
-                                        onChange={e => {
-                                            setFieldValue(
-                                                'description',
-                                                e.target.value
-                                            );
-                                            setFieldValue(
-                                                'excerpt',
-                                                e.target.value.slice(0, 75)
-                                            );
-                                        }}
-                                    />
-                                </div>
-                                <div className="flex flex-column">
-                                    <div className="flex flex-row justify-content-between flex-wrap gap-4">
-                                        <div className="flex flex-column flex-grow-1">
-                                            <label
-                                                htmlFor="publish_date"
-                                                className="mb-2"
-                                            >
-                                                Publish Date
-                                            </label>
-                                            <Calendar
-                                                showIcon
-                                                showButtonBar
-                                                id="publish_date"
-                                                name="publish_date"
-                                                value={
-                                                    new Date(
-                                                        Number(
-                                                            values.publish_date
-                                                        )
+                            )}
+                            <div className="flex flex-column">
+                                <label htmlFor="title" className="mb-2">
+                                    Title
+                                </label>
+                                <InputText
+                                    id="title"
+                                    name="title"
+                                    placeholder="Form Title"
+                                    className="p-inputtext-md w-full h-full"
+                                    value={values.title}
+                                    onChange={e =>
+                                        setFieldValue('title', e.target.value)
+                                    }
+                                />
+                            </div>
+                            <div className="flex flex-column">
+                                <label htmlFor="slug" className="mb-2">
+                                    Survey Link
+                                </label>
+                                <InputText
+                                    id="slug"
+                                    name="slug"
+                                    placeholder="Lime Survey Link"
+                                    className="p-inputtext-md w-full h-full"
+                                    value={values.slug}
+                                    onChange={e =>
+                                        setFieldValue('slug', e.target.value)
+                                    }
+                                />
+                            </div>
+                            <div className="flex flex-column">
+                                <label htmlFor="blog_url" className="mb-2">
+                                    External URL
+                                </label>
+                                <InputText
+                                    id="blog_url"
+                                    name="blog_url"
+                                    placeholder="Related BlogPost or Other External URL"
+                                    className="p-inputtext-md w-full h-full"
+                                    value={values.blog_url}
+                                    onChange={e =>
+                                        setFieldValue(
+                                            'blog_url',
+                                            e.target.value
+                                        )
+                                    }
+                                />
+                            </div>
+                            <div className="flex flex-column">
+                                <label htmlFor="excerpt" className="mb-2">
+                                    Excerpt (Short Description)
+                                </label>
+                                <InputText
+                                    disabled
+                                    id="excerpt"
+                                    name="excerpt"
+                                    placeholder="Auto Generated From Description"
+                                    className="p-inputtext-md w-full h-full"
+                                    value={values.excerpt}
+                                />
+                            </div>
+                            <div className="flex flex-column">
+                                <label htmlFor="description" className="mb-2">
+                                    Description
+                                </label>
+                                <InputTextarea
+                                    autoResize
+                                    id="description"
+                                    name="description"
+                                    placeholder="Event / Form Description"
+                                    className="p-inputtext-md w-full"
+                                    rows={5}
+                                    value={values.description}
+                                    onChange={e => {
+                                        setFieldValue(
+                                            'description',
+                                            e.target.value
+                                        );
+                                        setFieldValue(
+                                            'excerpt',
+                                            e.target.value.slice(0, 75)
+                                        );
+                                    }}
+                                />
+                            </div>
+                            <div className="flex flex-column">
+                                <div className="flex flex-row justify-content-between flex-wrap gap-4">
+                                    <div className="flex flex-column flex-grow-1">
+                                        <label
+                                            htmlFor="publish_date"
+                                            className="mb-2"
+                                        >
+                                            Publish Date
+                                        </label>
+                                        <Calendar
+                                            showIcon
+                                            showButtonBar
+                                            id="publish_date"
+                                            name="publish_date"
+                                            value={
+                                                new Date(
+                                                    Number(values.publish_date)
+                                                )
+                                            }
+                                            onChange={e =>
+                                                setFieldValue(
+                                                    'publish_date',
+                                                    Number(
+                                                        new Date(
+                                                            e.value
+                                                        ).getTime()
                                                     )
-                                                }
-                                                onChange={e =>
-                                                    setFieldValue(
-                                                        'publish_date',
-                                                        Number(
-                                                            new Date(
-                                                                e.value
-                                                            ).getTime()
-                                                        )
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div className="flex flex-column flex-grow-1">
+                                        <label
+                                            htmlFor="expire"
+                                            className="mb-2"
+                                        >
+                                            Expire Date
+                                        </label>
+                                        <Calendar
+                                            showIcon
+                                            showButtonBar
+                                            id="expire"
+                                            name="expire"
+                                            value={
+                                                new Date(Number(values.expire))
+                                            }
+                                            onChange={e =>
+                                                setFieldValue(
+                                                    'expire',
+                                                    Number(
+                                                        new Date(
+                                                            e.value
+                                                        ).getTime()
                                                     )
-                                                }
-                                            />
-                                        </div>
-                                        <div className="flex flex-column flex-grow-1">
-                                            <label
-                                                htmlFor="expire"
-                                                className="mb-2"
-                                            >
-                                                Expire Date
-                                            </label>
-                                            <Calendar
-                                                showIcon
-                                                showButtonBar
-                                                id="expire"
-                                                name="expire"
-                                                value={
-                                                    new Date(
-                                                        Number(values.expire)
-                                                    )
-                                                }
-                                                onChange={e =>
-                                                    setFieldValue(
-                                                        'expire',
-                                                        Number(
-                                                            new Date(
-                                                                e.value
-                                                            ).getTime()
-                                                        )
-                                                    )
-                                                }
-                                            />
-                                        </div>
+                                                )
+                                            }
+                                        />
                                     </div>
                                 </div>
                             </div>
-                        </Dialog>
+                        </div>
                     </form>
                 )}
             </Formik>
-        </>
+        </Dialog>
     );
-}
-
+};
 export default FormEvent;

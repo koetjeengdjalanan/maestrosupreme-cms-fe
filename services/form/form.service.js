@@ -15,6 +15,13 @@ const formService = {
         const { data } = await apiCall.put('/admin/form/update', payload);
         return data;
     },
+    async assignMedia(payload) {
+        const { data } = await apiCall.post(
+            '/admin/form/assign/media',
+            payload
+        );
+        return data;
+    },
 };
 
 export default formService;
