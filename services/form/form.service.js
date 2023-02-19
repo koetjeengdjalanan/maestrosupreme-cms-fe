@@ -15,6 +15,10 @@ const formService = {
         const { data } = await apiCall.put('/admin/form/update', payload);
         return data;
     },
+    async delete(id) {
+        const { data } = await apiCall.delete(`/admin/form/delete?id=${id}`);
+        return data;
+    },
     async assignMedia(payload) {
         const { data } = await apiCall.post(
             '/admin/form/assign/media',

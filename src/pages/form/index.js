@@ -2,6 +2,7 @@
 import { FileUploader } from '@/components/Input/BaseInput';
 import { useCreateForm, usePaginatedForm, useUpdateForm } from '@/hooks/form';
 import { useAssignMedia } from '@/hooks/form/useAssignFormMedia';
+import { useDeleteForm } from '@/hooks/form/useDeleteForm';
 import dayjs from 'dayjs';
 import { Formik } from 'formik';
 import { useSession } from 'next-auth/react';
@@ -9,13 +10,12 @@ import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { DataView } from 'primereact/dataview';
 import { Dialog } from 'primereact/dialog';
-import { FileUpload } from 'primereact/fileupload';
 import { InputSwitch } from 'primereact/inputswitch';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { useMemo, useRef, useState } from 'react';
 
-const PER_PAGE = 9;
+const PER_PAGE = 6;
 const PAGE = 1;
 
 const DATA_VIEW_OPTIONS = {
@@ -27,6 +27,7 @@ const DATA_VIEW_OPTIONS = {
 const FormEvent = () => {
     const [options, setOptions] = useState(DATA_VIEW_OPTIONS);
     const [isModalFormOpen, setIsModalFormOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [selectedData, setSelectedForm] = useState({});
 
     const params = useMemo(
@@ -36,6 +37,12 @@ const FormEvent = () => {
         }),
         [options]
     );
+
+    const { mutate: deleteForm, isLoading: deleting } = useDeleteForm();
+
+    // const handleDelete = (id)=>{
+    //     deleteForm(id)
+    // }
 
     const { data: formList, isFetching } = usePaginatedForm({
         params,
@@ -54,9 +61,14 @@ const FormEvent = () => {
         setIsModalFormOpen(true);
     };
 
+    const handleOpenModalDelete = () => {
+        setIsDeleteOpen(true);
+    };
+
     const onClose = () => {
         setIsModalFormOpen(false);
         setSelectedForm(null);
+        setIsDeleteOpen(false);
     };
 
     const itemTemplate = data => {
@@ -68,6 +80,7 @@ const FormEvent = () => {
                 data={data}
                 onSelect={onSelect}
                 handleModalFormOpen={handleOpenModalForm}
+                handleOpenModalDelete={handleOpenModalDelete}
             />
         );
     };
@@ -92,7 +105,7 @@ const FormEvent = () => {
                             first={options.first}
                             totalRecords={formList?.total}
                             rows={options.rows}
-                            rowsPerPageOptions={[9, 15, 21, 27]}
+                            rowsPerPageOptions={[6, 12, 18, 30]}
                             onPage={onPageChange}
                             itemTemplate={itemTemplate}
                             lazy={true}
@@ -106,11 +119,51 @@ const FormEvent = () => {
                 isOpen={isModalFormOpen}
                 onClose={onClose}
             />
+
+            <Dialog
+                draggable={false}
+                header="Delete Form / Event"
+                visible={isDeleteOpen}
+                style={{ width: '50vw' }}
+                onHide={onClose}
+                footer={
+                    <div>
+                        <Button
+                            label="Cancel"
+                            icon="pi pi-times"
+                            onClick={onClose}
+                            className="p-button-text"
+                        />
+                        <Button
+                            label="Delete"
+                            icon="pi pi-trash"
+                            loading={deleting}
+                            className="p-button-text p-button-danger"
+                            onClick={() => {
+                                deleteForm(selectedData?.id, {
+                                    onSuccess: () => {
+                                        setIsDeleteOpen(false);
+                                    },
+                                });
+                            }}
+                            autoFocus
+                        />
+                    </div>
+                }
+                dismissableMask
+            >
+                Are You Sure, you want to delete this form?
+            </Dialog>
         </>
     );
 };
 
-function DataViewTemplate({ data, onSelect, handleModalFormOpen }) {
+function DataViewTemplate({
+    data,
+    onSelect,
+    handleModalFormOpen,
+    handleOpenModalDelete,
+}) {
     const { data: session } = useSession();
     return (
         <>
@@ -179,6 +232,10 @@ function DataViewTemplate({ data, onSelect, handleModalFormOpen }) {
                                         ? 'hidden'
                                         : ''
                                 }`}
+                                onClick={() => {
+                                    handleOpenModalDelete();
+                                    onSelect(data);
+                                }}
                                 icon="pi pi-trash"
                                 tooltip="Delete"
                                 tooltipOptions={{
