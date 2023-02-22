@@ -13,7 +13,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputSwitch } from 'primereact/inputswitch';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const PER_PAGE = 6;
 const PAGE = 1;
@@ -183,10 +183,10 @@ function DataViewTemplate({
                             alt={data.name}
                             className="w-9 shadow-2 my-3 mx-0"
                         />
-                        <div className="text-2xl font-bold mb-2">
+                        <div className="text-2xl font-bold mb-2 line-clamp-1">
                             {data?.title}
                         </div>
-                        <div className="mb-3">{data.excerpt}</div>
+                        <div className="mb-3 line-clamp-2">{data.excerpt}</div>
                     </div>
                     <div className="flex align-items-center justify-content-between">
                         <p>
@@ -255,35 +255,33 @@ function DataViewTemplate({
 const ModalForm = ({ data, isOpen, onClose }) => {
     const { data: session } = useSession();
     const formRef = useRef(null);
+    const defaultImageUrl =
+        Array.isArray(data?.media) && data?.media.length > 0
+            ? data?.media[0].path
+            : '';
 
-    const [imageUrl, setImageUrl] = useState(
-        Array.isArray(data?.media) ? data?.media[0]?.path : ''
-    );
-    const [externalImageUrl, setExternalImageUrl] = useState('');
+    const [inputImageUrl, setInputImageUrl] = useState(defaultImageUrl);
 
     const [useExternalLinkImage, setExternalLinkImage] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setInputImageUrl(defaultImageUrl);
+        }
+    }, [defaultImageUrl, isOpen]);
+
     const { mutate: createForm, isLoading: creating } = useCreateForm();
     const { mutate: updateForm, updating } = useUpdateForm();
     const { mutate: assignMedia } = useAssignMedia();
 
     const onUploadImage = newUrl => {
-        assignMedia(
-            {
-                path: path,
-                form_id: data?.id,
-            },
-            {
-                onSuccess() {
-                    setImageUrl(newUrl);
-                },
-            }
-        );
+        setInputImageUrl(newUrl);
     };
 
     return (
         <Dialog
             draggable={false}
-            header="Edit Form / Event"
+            header={`${data?.id ? 'Edit' : 'Create'} Form / Event`}
             visible={isOpen}
             style={{ width: '50vw' }}
             onHide={onClose}
@@ -322,6 +320,7 @@ const ModalForm = ({ data, isOpen, onClose }) => {
                 onSubmit={e => {
                     const expireDate = Math.floor(e.expire / 1000);
                     const publishDate = Math.floor(e.publish_date / 1000);
+
                     const payload = {
                         ...e,
                         expire: expireDate,
@@ -330,6 +329,14 @@ const ModalForm = ({ data, isOpen, onClose }) => {
                     if (e.id) {
                         updateForm(payload, {
                             onSuccess: () => {
+                                if (
+                                    inputImageUrl &&
+                                    inputImageUrl !== defaultImageUrl
+                                )
+                                    assignMedia({
+                                        path: inputImageUrl,
+                                        form_id: e.id,
+                                    });
                                 onClose();
                             },
                         });
@@ -379,9 +386,9 @@ const ModalForm = ({ data, isOpen, onClose }) => {
                                             <InputText
                                                 id="path"
                                                 name="path"
-                                                value={externalImageUrl ?? ''}
+                                                value={inputImageUrl ?? ''}
                                                 onChange={e =>
-                                                    setExternalImageUrl(
+                                                    setInputImageUrl(
                                                         e.target.value
                                                     )
                                                 }
@@ -396,7 +403,7 @@ const ModalForm = ({ data, isOpen, onClose }) => {
                                         >
                                             <FileUploader
                                                 isEdit
-                                                defaultValue={imageUrl}
+                                                defaultValue={inputImageUrl}
                                                 onUpload={onUploadImage}
                                             />
                                         </div>
