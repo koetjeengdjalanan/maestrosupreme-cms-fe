@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import blogService from 'services/blog/blog.service';
 
-export const usePaginatedBlog = ({ params = {}, options = {} }) => {
+export const useBlogBySlug = ({ slug, options = {} }) => {
     //   const queryClient = useQueryClient();
     return useQuery({
-        queryKey: ['paginated-blog', params],
-        queryFn: ({ pageParam }) => blogService.getAll(pageParam ?? params),
+        queryKey: ['blog-by-slug', slug],
+        queryFn: () => blogService.getBySlug(slug),
+        enabled: !!slug,
         ...options,
     });
 };

@@ -1,6 +1,5 @@
 import { useUploadImage } from '@/hooks/useUploadImage';
 import { FileUpload } from 'primereact/fileupload';
-import { ProgressBar } from 'primereact/progressbar';
 import { Toast } from 'primereact/toast';
 import { Tooltip } from 'primereact/tooltip';
 import { useRef, useState } from 'react';
@@ -45,11 +44,6 @@ export function FileUploader(props) {
 
     const headerTemplate = options => {
         const { className, chooseButton } = options;
-        const value = totalSize / 10000;
-        const formatedValue =
-            fileUploadRef && fileUploadRef.current
-                ? fileUploadRef.current.formatSize(totalSize)
-                : '0 B';
 
         return (
             <div
@@ -61,17 +55,6 @@ export function FileUploader(props) {
                 }}
             >
                 {chooseButton}
-                {/* {uploadButton} */}
-                {/* {cancelButton} */}
-                <ProgressBar
-                    value={value}
-                    displayValueTemplate={() => `${formatedValue} / 1 MB`}
-                    style={{
-                        width: '300px',
-                        height: '20px',
-                        marginLeft: 'auto',
-                    }}
-                ></ProgressBar>
             </div>
         );
     };

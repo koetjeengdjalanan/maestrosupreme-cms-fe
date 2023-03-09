@@ -7,8 +7,26 @@ const blogService = {
         });
         return data;
     },
+    async getBySlug(slug) {
+        const { data } = await apiCall.get(`/admin/post/show/${slug}`);
+        return data;
+    },
     async create(payload) {
         const { data } = await apiCall.post('/admin/post/store', payload);
+        return data;
+    },
+    async edit(payload) {
+        const { data } = await apiCall.post('/admin/post/edit', payload);
+        return data;
+    },
+    async getCategories(params) {
+        const { data } = await apiCall.get('/admin/categories', {
+            params,
+        });
+        return data;
+    },
+    async deletePermanent(id) {
+        const data = await apiCall.delete(`/admin/post/delete?post_id=${id}`);
         return data;
     },
 };

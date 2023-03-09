@@ -1,12 +1,13 @@
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 // import RichTextEditor from '@/components/RichTextEditor';
-import { usePaginatedBlog } from '@/hooks/blog';
+import { useDeleteBlog, usePaginatedBlog } from '@/hooks/blog';
 import { useRouter } from 'next/router';
 import { FilterMatchMode } from 'primereact/api';
 import { Dialog } from 'primereact/dialog';
+import { Toast } from 'primereact/toast';
 
 const ROWS = 10;
 
@@ -65,10 +66,10 @@ function getParams(tableOptions) {
 
 const BlogPost = () => {
     const [lazyParams, setLazyParams] = useState(FILTER);
-    const [selectedPosts, setSelectedPosts] = useState(null);
     const [selectedPost, setSelectedPost] = useState(null);
     const [isDelete, setIsDelete] = useState(false);
-    const [isEdit, setIsEdit] = useState(false);
+
+    const toast = useRef(null);
 
     const router = useRouter();
 
@@ -81,6 +82,8 @@ const BlogPost = () => {
     const { data: blogList, isFetching } = usePaginatedBlog({
         params: newParams,
     });
+
+    const { mutate: deletePost, isLoading: deleting } = useDeleteBlog();
 
     const onPageChange = e => {
         setLazyParams(prev => ({
@@ -107,10 +110,6 @@ const BlogPost = () => {
         }));
     };
 
-    const onSelectionChange = e => {
-        setSelectedPosts(e.value);
-    };
-
     const tagBodyTemplate = rowData => {
         const tagLists = rowData.tags.map(res => res.title);
         return tagLists.join(', ');
@@ -124,7 +123,7 @@ const BlogPost = () => {
                     label="Edit"
                     icon="pi pi-pencil"
                     onClick={() => {
-                        router.push(`/blog-post/edit/${rowData.id}`);
+                        router.push(`/blog-post/edit/${rowData.slug}`);
                     }}
                 />
                 <Button
@@ -149,14 +148,6 @@ const BlogPost = () => {
                             <h1 className="m-0">Post List</h1>
                             <div className="flex justify-content-end gap-3">
                                 <Button
-                                    label="Delete"
-                                    icon="pi pi-fw pi-trash"
-                                    onClick={() =>
-                                        router.push('/blog-post/create')
-                                    }
-                                    className="p-button-raised p-button-danger"
-                                />
-                                <Button
                                     label="Add New Post"
                                     icon="pi pi-fw pi-plus-circle"
                                     onClick={() =>
@@ -170,7 +161,7 @@ const BlogPost = () => {
                             value={blogList?.items}
                             paginator
                             rows={lazyParams.rows}
-                            lazy
+                            lazy={isFetching}
                             filterDisplay="menu"
                             responsiveLayout="scroll"
                             dataKey="id"
@@ -184,13 +175,7 @@ const BlogPost = () => {
                             filters={lazyParams.filters}
                             loading={isFetching}
                             rowHover
-                            selection={selectedPosts}
-                            onSelectionChange={onSelectionChange}
                         >
-                            <Column
-                                selectionMode="multiple"
-                                headerStyle={{ width: '3em' }}
-                            ></Column>
                             <Column
                                 field="title"
                                 header="title"
@@ -231,10 +216,33 @@ const BlogPost = () => {
                     </div>
                 </div>
             </div>
+            <Toast ref={toast} />
             <ModalDeletePost
                 visible={isDelete}
                 onHide={() => setIsDelete(false)}
-                onDelete={() => console.log(selectedPost)}
+                onDelete={() => {
+                    deletePost(selectedPost?.id, {
+                        onSuccess: res => {
+                            if (res) {
+                                setIsDelete(false);
+                                toast.current.show({
+                                    severity: 'success',
+                                    summary: 'Success',
+                                    detail: 'Post was deleted',
+                                    life: 3000,
+                                });
+                                return;
+                            }
+                            toast.current.show({
+                                severity: 'error',
+                                summary: 'Error',
+                                detail: 'Oops, something wrong!!!',
+                                life: 3000,
+                            });
+                        },
+                    });
+                }}
+                isLoading={deleting}
             />
         </>
     );
@@ -246,6 +254,9 @@ function ModalDeletePost({ visible, onHide, onDelete, isLoading }) {
             header="Delete Post"
             visible={visible}
             onHide={onHide}
+            closable
+            draggable={false}
+            closeOnEscape
             footer={
                 <div className="flex justify-content-end gap-3">
                     <Button

@@ -31,11 +31,6 @@ const AppMenu = () => {
                     to: '/blog-post',
                 },
                 {
-                    label: 'Tags',
-                    icon: 'pi pi-fw pi-tags',
-                    to: '/blog-post/tags',
-                },
-                {
                     label: 'Category',
                     icon: 'pi pi-fw pi-hashtag',
                     to: '/blog-post/category',
@@ -46,11 +41,6 @@ const AppMenu = () => {
             label: 'Event',
             items: [
                 { label: 'Form', icon: 'pi pi-fw pi-question', to: '/form' },
-                {
-                    label: 'Responses',
-                    icon: 'pi pi-fw pi-file',
-                    to: '/form/responses',
-                },
             ],
         },
     ];
