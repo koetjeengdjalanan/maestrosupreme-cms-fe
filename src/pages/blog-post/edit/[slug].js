@@ -24,6 +24,8 @@ function CreatePost() {
         router.push('/blog-post');
     };
 
+    // console.log(data);
+
     return (
         <>
             <BlogForm
