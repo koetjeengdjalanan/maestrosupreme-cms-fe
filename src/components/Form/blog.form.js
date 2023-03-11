@@ -64,7 +64,9 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
                         excerpt: defaultValues?.excerpt ?? '',
                         body: defaultValues?.body ?? '',
                         category_id: defaultValues?.category?.id ?? '',
-                        published_date: defaultValues?.published_date ?? null,
+                        published_date:
+                            Math.floor(defaultValues?.published_at / 1000) ??
+                            null,
                         thumbnail: defaultValues?.thumbnail[0] ?? '',
                     }}
                     onSubmit={onSubmit}
@@ -111,7 +113,9 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
                                                     !Number(
                                                         values.published_date
                                                     )
-                                                        ? Date.now()
+                                                        ? Math.floor(
+                                                              Date.now() / 1000
+                                                          )
                                                         : null
                                                 );
                                             }}
