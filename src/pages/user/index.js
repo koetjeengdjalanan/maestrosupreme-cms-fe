@@ -1,12 +1,17 @@
 import { useUpdateUser } from '@/hooks/user';
 import { Formik } from 'formik';
-import { useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 import { useState } from 'react';
+
+const reloadSession = () => {
+    const event = new Event('visibilitychange');
+    document.dispatchEvent(event);
+};
 
 const ProfilePage = () => {
     const { data: session } = useSession();
@@ -18,11 +23,16 @@ const ProfilePage = () => {
     const { mutate } = useUpdateUser();
 
     const onSubmit = data => {
-        mutate(data);
-        toast.current.show({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Congratulations, User profile was updated!!!',
+        mutate(data, {
+            onSuccess(e) {
+                reloadSession();
+
+                toast.current.show({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Congratulations, User profile was updated!!!',
+                });
+            },
         });
     };
 
@@ -119,13 +129,6 @@ const ProfilePage = () => {
                                                 <div>
                                                     <label
                                                         htmlFor="username"
-                                                        value={values.username}
-                                                        onChange={e =>
-                                                            setFieldValue(
-                                                                'username',
-                                                                e.target.value
-                                                            )
-                                                        }
                                                         className="block text-900 font-medium mb-2"
                                                     >
                                                         Username
@@ -133,8 +136,15 @@ const ProfilePage = () => {
                                                     <InputText
                                                         id="username"
                                                         type="text"
-                                                        placeholder="Email address"
+                                                        placeholder="username"
                                                         className="w-full mb-3"
+                                                        value={values.username}
+                                                        onChange={e =>
+                                                            setFieldValue(
+                                                                'username',
+                                                                e.target.value
+                                                            )
+                                                        }
                                                     />
                                                 </div>
                                             </div>
@@ -169,8 +179,9 @@ const ProfilePage = () => {
                                         {session?.user?.name}
                                     </p>
                                     <p className="text-gray-400">
-                                        {session?.user?.email}
+                                        {session?.user?.username ?? '-'}
                                     </p>
+                                    <p>{session?.user?.email}</p>
                                     <p className="text-gray-400">
                                         {session?.user?.role[0]}
                                     </p>

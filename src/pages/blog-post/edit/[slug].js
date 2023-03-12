@@ -1,4 +1,5 @@
 import { BlogForm } from '@/components/Form';
+import Loader from '@/components/Loader';
 import { useBlogBySlug, useEditBlog } from '@/hooks/blog';
 import { useRouter } from 'next/router';
 import { Toast } from 'primereact/toast';
@@ -23,6 +24,10 @@ function CreatePost() {
         });
         router.push('/blog-post');
     };
+
+    if (isLoading) {
+        return <Loader />;
+    }
 
     // console.log(data);
 
