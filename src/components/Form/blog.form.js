@@ -1,20 +1,25 @@
-import { useMemo } from 'react';
 import { useCategories } from '@/hooks/blog';
+import { getErrors } from '@/utils/get-error';
+import {
+    CreateBlogSchema,
+    UpdateBlogSchema,
+} from '@/utils/schema-form-validation';
+import clsx from 'clsx';
 import { Formik } from 'formik';
 import { useSession } from 'next-auth/react';
 import { Button } from 'primereact/button';
 import { Chips } from 'primereact/chips';
 import { Dropdown } from 'primereact/dropdown';
 import { Editor } from 'primereact/editor';
-import { InputText } from 'primereact/inputtext';
-import { InputTextarea } from 'primereact/inputtextarea';
 import { ToggleButton } from 'primereact/togglebutton';
-import { isValidDate } from '@/utils';
-import { FileUploader } from '../Input/BaseInput';
+import { useMemo } from 'react';
+import { FileUploader, TextInput, Textarea } from '../Input/BaseInput';
 
 export function BlogForm({ onSubmit, defaultValues, isLoading }) {
     const { data: session } = useSession();
     const { data: categories } = useCategories({});
+
+    console.log(defaultValues);
 
     const categoryOptions = useMemo(
         () =>
@@ -37,6 +42,31 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
         [defaultValues?.tags]
     );
 
+    const initialValues = useMemo(() => {
+        if (defaultValues) {
+            return {
+                id: defaultValues?.id ?? '',
+                title: defaultValues?.title ?? '',
+                slug: defaultValues?.slug ?? '',
+                excerpt: defaultValues?.excerpt ?? '',
+                body: defaultValues?.body ?? '',
+                category_id: defaultValues?.category?.id ?? '',
+                published_date:
+                    Math.floor(defaultValues?.published_at / 1000) ?? null,
+                thumbnail: defaultValues?.thumbnail[0] ?? '',
+            };
+        }
+        return {
+            title: '',
+            slug: '',
+            excerpt: '',
+            body: '',
+            category_id: '',
+            published_date: null,
+            thumbnail: '',
+        };
+    }, [defaultValues]);
+
     return (
         <div className="card h-full w-full">
             <div className="flex justify-content-between">
@@ -49,55 +79,61 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
                 >
                     {defaultValues ? 'Update Post' : 'Make New Post'}
                 </h1>
-                {/* <h2>
-                                            {process.env.FE_URI}/
-                                        </h2> */}
             </div>
             {!isLoading && (
                 <Formik
                     initialValues={{
-                        id: defaultValues?.id ?? '',
-                        user_id: session?.user?.id ?? '',
-                        title: defaultValues?.title ?? '',
-                        slug: defaultValues?.slug ?? '',
                         tags: tags,
-                        excerpt: defaultValues?.excerpt ?? '',
-                        body: defaultValues?.body ?? '',
-                        category_id: defaultValues?.category?.id ?? '',
-                        published_date:
-                            Math.floor(defaultValues?.published_at / 1000) ??
-                            null,
-                        thumbnail: defaultValues?.thumbnail[0] ?? '',
+                        user_id: session?.user?.id ?? '',
+                        ...initialValues,
                     }}
+                    validationSchema={
+                        defaultValues ? UpdateBlogSchema : CreateBlogSchema
+                    }
                     onSubmit={onSubmit}
                 >
-                    {({ values, setFieldValue, handleSubmit }) => (
+                    {({
+                        values,
+                        setFieldValue,
+                        handleSubmit,
+                        errors,
+                        touched,
+                    }) => (
                         <form onSubmit={handleSubmit}>
                             <div className="flex flex-column flex-nowrap justify-content-start align-items-start gap-4">
-                                <div className="flex gap-6 align-items-center w-full">
-                                    <div className="flex flex-grow-1">
-                                        <span className="p-float-label w-full">
-                                            <InputText
-                                                id="title"
-                                                name="title"
-                                                className="p-inputtext-lg w-full h-full"
-                                                value={values.title}
-                                                onChange={e => {
-                                                    setFieldValue(
-                                                        'title',
-                                                        e.target.value
-                                                    );
-                                                }}
-                                            />
-                                            <label
-                                                htmlFor="title"
-                                                className="mb-2"
-                                            >
-                                                Title
-                                            </label>
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-none">
+                                <div className="flex gap-6 align-items-start w-full">
+                                    <TextInput
+                                        id="Title"
+                                        name="title"
+                                        className="flex-grow-1"
+                                        label="Title"
+                                        errors={errors}
+                                        value={values.title}
+                                        touched={touched}
+                                        onChange={e => {
+                                            setFieldValue(
+                                                'title',
+                                                e.target.value
+                                            );
+
+                                            // set slug values
+                                            const slug = e.target.value
+                                                .toLowerCase()
+                                                .replace(/^-+/, '')
+                                                .replace(/-+$/, '')
+                                                .replace(/\s+/g, '-')
+                                                .replace(/\-\-+/g, '-')
+                                                .replace(/[^\w\-]+/g, '');
+                                            setFieldValue('slug', slug);
+                                        }}
+                                    />
+
+                                    <div
+                                        className="flex flex-none "
+                                        style={{
+                                            marginTop: 27,
+                                        }}
+                                    >
                                         <ToggleButton
                                             onLabel="Publish"
                                             offLabel="Draft"
@@ -134,54 +170,28 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
                                                 );
                                             }}
                                         />
+                                        {getErrors(
+                                            touched,
+                                            errors,
+                                            'thumbnail'
+                                        ) && (
+                                            <small
+                                                id={`tags-help`}
+                                                className="text-red-300"
+                                            >
+                                                {errors['thumbnail']}
+                                            </small>
+                                        )}
                                     </div>
                                     <div className="col-12 md:col-6">
                                         <div className="flex flex-column flex-nowrap w-full gap-4 p-fluid">
-                                            <div className="flex flex-grow-1">
-                                                <div className="w-full">
-                                                    <label
-                                                        htmlFor="slug"
-                                                        className="mb-2"
-                                                    >
-                                                        Slug
-                                                    </label>
-                                                    <InputText
-                                                        id="slug"
-                                                        name="slug"
-                                                        className="p-inputtext-lg w-full"
-                                                        value={values.slug}
-                                                        onChange={e => {
-                                                            const slug =
-                                                                e.target.value
-                                                                    .toLowerCase()
-                                                                    .replace(
-                                                                        /^-+/,
-                                                                        ''
-                                                                    )
-                                                                    .replace(
-                                                                        /-+$/,
-                                                                        ''
-                                                                    )
-                                                                    .replace(
-                                                                        /\s+/g,
-                                                                        '-'
-                                                                    )
-                                                                    .replace(
-                                                                        /\-\-+/g,
-                                                                        '-'
-                                                                    )
-                                                                    .replace(
-                                                                        /[^\w\-]+/g,
-                                                                        ''
-                                                                    );
-                                                            setFieldValue(
-                                                                'slug',
-                                                                slug
-                                                            );
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
+                                            <TextInput
+                                                name="slug"
+                                                className="flex-grow-1"
+                                                label="Slug"
+                                                value={values.slug}
+                                                disabled
+                                            />
                                             <div className="w-full">
                                                 <label htmlFor="postTags mb-2">
                                                     Tags
@@ -196,8 +206,28 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
                                                         );
                                                     }}
                                                     separator=","
+                                                    className={clsx(
+                                                        getErrors(
+                                                            touched,
+                                                            errors,
+                                                            'tags'
+                                                        ) && 'p-invalid'
+                                                    )}
                                                 />
+                                                {getErrors(
+                                                    touched,
+                                                    errors,
+                                                    'tags'
+                                                ) && (
+                                                    <small
+                                                        id={`tags-help`}
+                                                        className="text-red-300"
+                                                    >
+                                                        {errors['tags']}
+                                                    </small>
+                                                )}
                                             </div>
+
                                             <div className="w-full">
                                                 <label htmlFor="postCategory">
                                                     Category
@@ -214,27 +244,46 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
                                                     options={categoryOptions}
                                                     optionLabel="name"
                                                     placeholder="Select category"
-                                                    className="w-full"
+                                                    className={clsx(
+                                                        getErrors(
+                                                            touched,
+                                                            errors,
+                                                            'category_id'
+                                                        ) && 'p-invalid',
+                                                        'w-full'
+                                                    )}
                                                 />
+                                                {getErrors(
+                                                    touched,
+                                                    errors,
+                                                    'category_id'
+                                                ) && (
+                                                    <small
+                                                        id={`tags-help`}
+                                                        className="text-red-300"
+                                                    >
+                                                        {errors['category_id']}
+                                                    </small>
+                                                )}
                                             </div>
-                                            <div className="w-full">
-                                                <label htmlFor="excerpt">
-                                                    Excerpt
-                                                </label>
-                                                <InputTextarea
-                                                    id="excerpt"
-                                                    value={values.excerpt}
-                                                    onChange={e =>
-                                                        setFieldValue(
-                                                            'excerpt',
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    autoResize
-                                                    rows={5}
-                                                    cols={30}
-                                                />
-                                            </div>
+                                            <Textarea
+                                                name="excerpt"
+                                                value={values.excerpt}
+                                                onChange={e =>
+                                                    setFieldValue(
+                                                        'excerpt',
+                                                        e.target.value
+                                                    )
+                                                }
+                                                autoResize
+                                                rows={5}
+                                                cols={30}
+                                                id="Title"
+                                                className="flex-grow-1"
+                                                label="Excerpt"
+                                                errors={errors}
+                                                touched={touched}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -251,6 +300,14 @@ export function BlogForm({ onSubmit, defaultValues, isLoading }) {
                                             // height: '320px',
                                         }}
                                     />
+                                    {getErrors(touched, errors, 'body') && (
+                                        <small
+                                            id={`tags-help`}
+                                            className="text-red-300"
+                                        >
+                                            {errors['body']}
+                                        </small>
+                                    )}
                                 </div>
                                 <Button type="submit">Submit</Button>
                             </div>

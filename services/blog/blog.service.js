@@ -12,8 +12,11 @@ const blogService = {
         return data;
     },
     async create(payload) {
-        const { data } = await apiCall.post('/admin/post/store', payload);
-        return data;
+        const res = await apiCall.post('/admin/post/store', payload);
+        if (res?.data) {
+            return res.data;
+        }
+        return res;
     },
     async edit(payload) {
         const { data } = await apiCall.post('/admin/post/edit', payload);
