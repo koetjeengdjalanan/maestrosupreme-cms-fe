@@ -161,7 +161,7 @@ const BlogPost = () => {
                             value={blogList?.items}
                             paginator
                             rows={lazyParams.rows}
-                            lazy={isFetching}
+                            lazy
                             filterDisplay="menu"
                             responsiveLayout="scroll"
                             dataKey="id"
