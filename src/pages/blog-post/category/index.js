@@ -4,6 +4,7 @@ import {
     useCreateCategory,
     useDeleteCategory,
 } from '@/hooks/category';
+import { dateTimeFormat } from '@/utils/format';
 import { Formik } from 'formik';
 import { useSession } from 'next-auth/react';
 import { Button } from 'primereact/button';
@@ -136,7 +137,7 @@ const CategoriesTable = () => {
                             paginator
                             className="p-datatable-gridlines"
                             showGridlines
-                            rows={15}
+                            rows={10}
                             dataKey="id"
                             filterDisplay="menu"
                             loading={isLoading}
@@ -151,17 +152,17 @@ const CategoriesTable = () => {
                                 style={{ minWidth: '12rem' }}
                             />
                             <Column
-                                field="created_at"
                                 header="Created at"
-                                filter
-                                filterPlaceholder="Search by name"
+                                sortable
                                 style={{ minWidth: '12rem' }}
+                                body={data =>
+                                    dateTimeFormat(data.created_at ?? 0)
+                                }
                             />
                             <Column
                                 field="author.name"
                                 header="Author"
-                                filter
-                                filterPlaceholder="Search by name"
+                                sortable
                                 style={{ minWidth: '12rem' }}
                             />
                             <Column

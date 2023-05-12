@@ -9,27 +9,33 @@ function CreatePost() {
     const toast = useRef();
     const router = useRouter();
     const { slug } = router.query;
-    const { mutate } = useEditBlog();
+    const { mutateAsync } = useEditBlog();
     const { data, isLoading } = useBlogBySlug({ slug });
     if (!isLoading && !data) {
         router.push('/blog-post');
         return null;
     }
-    const handleSubmit = data => {
-        mutate(data);
-        toast.current.show({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Congratulations, Post was updated!!!',
-        });
-        router.push('/blog-post');
+    const handleSubmit = async data => {
+        try {
+            await mutateAsync(data);
+            await toast.current.show({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Congratulations, Post was updated!!!',
+            });
+            router.push('/blog-post');
+        } catch (err) {
+            toast.current.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: err.response.data.message,
+            });
+        }
     };
 
     if (isLoading) {
         return <Loader />;
     }
-
-    // console.log(data);
 
     return (
         <>

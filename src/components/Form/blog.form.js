@@ -1,4 +1,3 @@
-import { useCategories } from '@/hooks/blog';
 import { getErrors } from '@/utils/get-error';
 import {
     CreateBlogSchema,
@@ -14,12 +13,11 @@ import { Editor } from 'primereact/editor';
 import { ToggleButton } from 'primereact/togglebutton';
 import { useMemo } from 'react';
 import { FileUploader, TextInput, Textarea } from '../Input/BaseInput';
+import { useCategories } from '@/hooks/category';
 
 export function BlogForm({ onSubmit, defaultValues, isLoading }) {
     const { data: session } = useSession();
     const { data: categories } = useCategories({});
-
-    console.log(defaultValues);
 
     const categoryOptions = useMemo(
         () =>
