@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import blogService from 'services/blog/blog.service';
+import categoryService from 'services/category/category.service';
 
 export const useCategories = ({ params = {}, options = {} }) => {
     return useQuery({
         queryKey: ['blog-categories', params],
-        queryFn: ({ pageParam }) =>
-            blogService.getCategories(pageParam ?? params),
+        queryFn: ({ pageParam }) => categoryService.getAll(pageParam ?? params),
         ...options,
     });
 };
